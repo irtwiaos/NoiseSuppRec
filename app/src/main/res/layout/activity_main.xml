@@ -14,47 +14,46 @@
         android:textOff=""
         android:focusable="false"
         android:focusableInTouchMode="false"
-        android:layout_marginTop="80dp"
-        android:layout_marginLeft="10dp"
-        android:layout_marginRight="10dp"
-        android:layout_below="@+id/button"
-        android:layout_centerHorizontal="true" />
+        android:layout_marginTop="130px"
+        android:layout_marginLeft="10px"
+        android:layout_marginRight="10px"
+        android:layout_below="@+id/button" />
 
     <Switch
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="New Switch"
-        android:textSize="15dp"
+        android:textSize="35px"
         android:id="@+id/switch1"
-        android:layout_marginTop="20dp"
+        android:layout_marginTop="30px"
         android:layout_alignStart="@+id/checkBox" />
 
     <CheckBox
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="Half-wave Rectify"
-        android:textSize="30dp"
+        android:textSize="60px"
         android:id="@+id/checkBox"
-        android:layout_marginTop="20dp"
+        android:layout_marginTop="40px"
         android:checked="false"
         android:layout_below="@+id/switch1"
         android:layout_alignStart="@+id/checkBox2" />
 
     <CheckBox
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="Residual Noise Reduction"
-        android:textSize="30dp"
+        android:textSize="60px"
         android:id="@+id/checkBox2"
         android:checked="false"
         android:layout_below="@+id/checkBox"
         android:layout_alignLeft="@+id/toggle" />
 
     <CheckBox
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="Additional Signal Attenuation"
-        android:textSize="30dp"
+        android:textSize="60px"
         android:id="@+id/checkBox3"
         android:checked="false"
         android:layout_below="@+id/checkBox2"
@@ -64,27 +63,27 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Play"
-        android:textSize="30dp"
+        android:textSize="60px"
         android:id="@+id/button"
         android:layout_below="@+id/checkBox3"
         android:layout_alignStart="@+id/checkBox3"
-        android:layout_marginTop="10dp" />
+        android:layout_marginTop="20px" />
 
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:textAppearance="?android:attr/textAppearanceMedium"
         android:text="Noise Reduction"
-        android:textSize="30dp"
+        android:textSize="60px"
         android:id="@+id/textView"
         android:layout_alignTop="@+id/switch1"
-        android:layout_alignEnd="@+id/checkBox2" />
+        android:layout_centerHorizontal="true" />
 
     <Chronometer
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:id="@+id/chronometer"
-        android:textSize="30dp"
+        android:textSize="60px"
         android:layout_alignTop="@+id/textView2"
         android:layout_toEndOf="@+id/button" />
 
@@ -93,11 +92,19 @@
         android:layout_height="wrap_content"
         android:textAppearance="?android:attr/textAppearanceLarge"
         android:text="Time:"
-        android:textSize="30dp"
+        android:textSize="60px"
         android:id="@+id/textView2"
         android:layout_below="@+id/button"
         android:layout_alignStart="@+id/toggle"
-        android:layout_marginTop="20dp" />
+        android:layout_marginTop="40px" />
+
+    <ExpandableListView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/expandableListView"
+        android:layout_below="@+id/toggle"
+        android:layout_alignStart="@+id/toggle"
+        android:layout_marginTop="46px" />
 
 
 </RelativeLayout>
