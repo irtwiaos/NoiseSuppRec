@@ -28,13 +28,15 @@ public class MainActivity extends ActionBarActivity {
     private MediaRecorder mRec = null;
     private MediaPlayer mPlay = null;
 
-    private RecordButton RecButton = null;
+    private ToggleButton RecButton = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        RecButton = (RecordButton) findViewById(R.id.toggle);
+        RecButton = (ToggleButton)findViewById(R.id.toggle);
+        RecButton.setOnClickListener(RecClick);
+        RecButton.setChecked(false);
     }
 
 
@@ -120,32 +122,24 @@ public class MainActivity extends ActionBarActivity {
         mRec = null;
     }
 
-    class RecordButton extends ToggleButton{
-
+    View.OnClickListener RecClick = new OnClickListener() {
         boolean startRec = true;
 
-        OnClickListener click = new OnClickListener() {
             public void onClick(View v){
                 onRecord(startRec);
 
                 if (startRec){
-                    setChecked(true);
+                    RecButton.setChecked(true);
                 }
 
                 else{
-                    setChecked(false);
+                    RecButton.setChecked(false);
                 }
 
                 startRec = !startRec;
             }
     };
 
-        public RecordButton(Context ctx){
-            super(ctx);
-            setChecked(false);
-            setOnClickListener(click);
-        }
-    }
 
     @Override
     public void onPause(){
