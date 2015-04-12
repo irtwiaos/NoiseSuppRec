@@ -19,24 +19,32 @@ import android.view.View.OnClickListener;
 
 import java.io.IOException;
 
+import static android.view.View.*;
+
 public class MainActivity extends ActionBarActivity {
 
-    private static final String LOG_TAG = "AudioRecordTest";
+    //private static final String LOG_TAG = "AudioRecordTest";
 
-    private static String mFileName = null;
+    private String mFileName = null;
 
     private MediaRecorder mRec = null;
     private MediaPlayer mPlay = null;
 
-    private ToggleButton RecButton = null;
+    ToggleButton RecButton;
+    Button PlayButton;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
         RecButton = (ToggleButton)findViewById(R.id.toggle);
         RecButton.setOnClickListener(RecClick);
         RecButton.setChecked(false);
+
+        PlayButton = (Button)findViewById(R.id.button);
+        PlayButton.setOnClickListener(PlayClick);
+        PlayButton.setText("Play");
     }
 
 
@@ -62,8 +70,6 @@ public class MainActivity extends ActionBarActivity {
         return super.onOptionsItemSelected(item);
     }
 
-
-
     private void onRecord(boolean start){
         if (start){
             startRecording();
@@ -76,6 +82,14 @@ public class MainActivity extends ActionBarActivity {
 
     private void onPlay(boolean start) {
         if (start) {
+
+            /*get switch and checkbox options
+
+            if (switch is true){
+                NoiseRed(check box shit);
+            }
+            */
+
             startPlaying();
         }
 
@@ -91,7 +105,7 @@ public class MainActivity extends ActionBarActivity {
             mPlay.prepare();
             mPlay.start();
         } catch (IOException e) {
-            Log.e(LOG_TAG, "prepare() failed");
+            e.printStackTrace();
         }
     }
 
@@ -110,7 +124,7 @@ public class MainActivity extends ActionBarActivity {
         try {
             mRec.prepare();
         } catch (IOException e) {
-            Log.e(LOG_TAG, "prepare() failed");
+            e.printStackTrace();
         }
 
         mRec.start();
@@ -122,9 +136,10 @@ public class MainActivity extends ActionBarActivity {
         mRec = null;
     }
 
-    View.OnClickListener RecClick = new OnClickListener() {
+    OnClickListener RecClick = new OnClickListener() {
         boolean startRec = true;
 
+            @Override
             public void onClick(View v){
                 onRecord(startRec);
 
@@ -140,7 +155,29 @@ public class MainActivity extends ActionBarActivity {
             }
     };
 
+    OnClickListener PlayClick = new OnClickListener() {
+       boolean startPlay = true;
 
+       @Override
+       public void onClick(View v) {
+
+           onPlay(startPlay);
+
+           if (startPlay){
+               PlayButton.setText("Stop");
+           }
+
+           else{
+               PlayButton.setText("Play");
+           }
+       }
+   };
+
+    private void CreateFile(){
+
+        mFileName = Environment.getExternalStorageDirectory().getAbsolutePath();
+        mFileName += "/audiorecordtest.3gp";
+    }
     @Override
     public void onPause(){
 
