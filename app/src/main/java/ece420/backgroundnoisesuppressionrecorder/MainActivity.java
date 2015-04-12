@@ -21,10 +21,20 @@ import java.io.IOException;
 
 public class MainActivity extends ActionBarActivity {
 
+    private static final String LOG_TAG = "AudioRecordTest";
+
+    private static String mFileName = null;
+
+    private MediaRecorder mRec = null;
+    private MediaPlayer mPlay = null;
+
+    private RecordButton RecButton = null;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        RecButton = (RecordButton) findViewById(R.id.toggle);
     }
 
 
@@ -50,14 +60,7 @@ public class MainActivity extends ActionBarActivity {
         return super.onOptionsItemSelected(item);
     }
 
-    private static final String LOG_TAG = "AudioRecordTest";
 
-    private static String mFileName = null;
-
-    private MediaRecorder mRec = null;
-    private MediaPlayer mPlay = null;
-
-    private RecordButton RecButton = null;
 
     private void onRecord(boolean start){
         if (start){
@@ -118,6 +121,7 @@ public class MainActivity extends ActionBarActivity {
     }
 
     class RecordButton extends ToggleButton{
+
         boolean startRec = true;
 
         OnClickListener click = new OnClickListener() {
