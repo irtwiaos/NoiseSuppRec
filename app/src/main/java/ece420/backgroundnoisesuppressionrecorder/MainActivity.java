@@ -246,7 +246,7 @@ public class MainActivity extends ActionBarActivity {
         ext += Integer.toString(now.get(Calendar.MINUTE));
 
         mFileName = Environment.getExternalStorageDirectory().getAbsolutePath();
-        mFileName += "/Music"+ext + ".3gp";
+        mFileName += "/Music/"+ext + ".3gp";
     }
 
     @Override
