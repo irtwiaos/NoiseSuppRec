@@ -18,9 +18,15 @@ import android.view.View;
 import android.content.Context;
 import android.view.ViewGroup;
 import android.view.View.OnClickListener;
-
+import android.widget.ArrayAdapter;
+import android.widget.ListView;
+import java.util.ArrayList;
+import java.util.Arrays;
+import android.app.ListActivity;
+import java.io.File;
 import java.io.IOException;
 import java.util.Calendar;
+import java.util.List;
 
 import static android.view.View.*;
 
@@ -39,22 +45,41 @@ public class MainActivity extends ActionBarActivity {
 
     private boolean startPlay;
 
+    private ListView lv;
+    private ArrayAdapter<String> listAdapter ;
+
+    private List<String> myList;
+    File file;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        RecButton = (ToggleButton)findViewById(R.id.toggle);
+        RecButton = (ToggleButton) findViewById(R.id.toggle);
         RecButton.setOnClickListener(RecClick);
         RecButton.setChecked(false);
 
-        PlayButton = (Button)findViewById(R.id.button);
+        PlayButton = (Button) findViewById(R.id.button);
         PlayButton.setOnClickListener(PlayClick);
         PlayButton.setText("Play");
         startPlay = true;
 
-        timer = (Chronometer)findViewById(R.id.chronometer);
+        timer = (Chronometer) findViewById(R.id.chronometer);
         timer.setText("00:00");
+
+        //FileList
+        lv = (ListView) findViewById(R.id.listView);
+        myList = new ArrayList<String>();
+        File directory = Environment.getExternalStorageDirectory();
+        file = new File(directory.getAbsolutePath());
+        File list[] = file.listFiles();
+        for (int i = 0; i < list.length; i++) {
+            myList.add(list[i].getName());
+        }
+        ArrayAdapter<String> adapter = new ArrayAdapter<String>(this,
+                android.R.layout.simple_list_item_1, android.R.id.text1, myList);
+        lv.setAdapter(adapter); //Set all the file in the list.
     }
 
 
@@ -79,6 +104,7 @@ public class MainActivity extends ActionBarActivity {
 
         return super.onOptionsItemSelected(item);
     }
+
 
     private void onRecord(boolean start){
         if (start){
