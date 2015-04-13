@@ -4,12 +4,14 @@ import android.media.AudioRecord;
 import android.app.Activity;
 import android.os.Bundle;
 import android.os.Environment;
+import android.os.SystemClock;
 import android.support.v7.app.ActionBarActivity;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.media.MediaRecorder;
 import android.media.MediaPlayer;
 import android.widget.Button;
+import android.widget.Chronometer;
 import android.widget.ToggleButton;
 import android.util.Log;
 import android.view.View;
@@ -18,6 +20,7 @@ import android.view.ViewGroup;
 import android.view.View.OnClickListener;
 
 import java.io.IOException;
+import java.util.Calendar;
 
 import static android.view.View.*;
 
@@ -32,6 +35,9 @@ public class MainActivity extends ActionBarActivity {
 
     ToggleButton RecButton;
     Button PlayButton;
+    Chronometer timer;
+
+    private boolean startPlay;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -45,6 +51,10 @@ public class MainActivity extends ActionBarActivity {
         PlayButton = (Button)findViewById(R.id.button);
         PlayButton.setOnClickListener(PlayClick);
         PlayButton.setText("Play");
+        startPlay = true;
+
+        timer = (Chronometer)findViewById(R.id.chronometer);
+        timer.setText("00:00");
     }
 
 
@@ -72,6 +82,7 @@ public class MainActivity extends ActionBarActivity {
 
     private void onRecord(boolean start){
         if (start){
+            CreateFile();
             startRecording();
         }
 
@@ -100,6 +111,8 @@ public class MainActivity extends ActionBarActivity {
 
     private void startPlaying() {
         mPlay = new MediaPlayer();
+        timer.setBase(SystemClock.elapsedRealtime());
+        timer.start();
         try {
             mPlay.setDataSource(mFileName);
             mPlay.prepare();
@@ -107,9 +120,23 @@ public class MainActivity extends ActionBarActivity {
         } catch (IOException e) {
             e.printStackTrace();
         }
+
+        mPlay.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
+            @Override
+            public void onCompletion(MediaPlayer mp) {
+                timer.stop();
+                timer.setText("00:00");
+                PlayButton.setText("Play");
+                startPlay = true;
+                RecButton.setEnabled(true);
+
+            }
+        });
     }
 
     private void stopPlaying() {
+        timer.stop();
+        timer.setText("00:00");
         mPlay.release();
         mPlay = null;
     }
@@ -117,7 +144,7 @@ public class MainActivity extends ActionBarActivity {
     private void startRecording() {
         mRec = new MediaRecorder();
         mRec.setAudioSource(MediaRecorder.AudioSource.MIC);
-        mRec.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4);
+        mRec.setOutputFormat(MediaRecorder.OutputFormat.THREE_GPP);
         mRec.setOutputFile(mFileName);
         mRec.setAudioEncoder(MediaRecorder.AudioEncoder.AMR_NB);
 
@@ -127,11 +154,15 @@ public class MainActivity extends ActionBarActivity {
             e.printStackTrace();
         }
 
+        timer.setBase(SystemClock.elapsedRealtime());
+        timer.start();
         mRec.start();
     }
 
     private void stopRecording() {
         mRec.stop();
+        timer.stop();
+        timer.setText("00:00");
         mRec.release();
         mRec = null;
     }
@@ -145,10 +176,12 @@ public class MainActivity extends ActionBarActivity {
 
                 if (startRec){
                     RecButton.setChecked(true);
+                    PlayButton.setEnabled(false);
                 }
 
                 else{
                     RecButton.setChecked(false);
+                    PlayButton.setEnabled(true);
                 }
 
                 startRec = !startRec;
@@ -156,7 +189,6 @@ public class MainActivity extends ActionBarActivity {
     };
 
     OnClickListener PlayClick = new OnClickListener() {
-       boolean startPlay = true;
 
        @Override
        public void onClick(View v) {
@@ -165,19 +197,32 @@ public class MainActivity extends ActionBarActivity {
 
            if (startPlay){
                PlayButton.setText("Stop");
+               RecButton.setEnabled(false);
            }
 
            else{
                PlayButton.setText("Play");
+               RecButton.setEnabled(true);
            }
+
+           startPlay = !startPlay;
        }
    };
 
     private void CreateFile(){
 
+        Calendar now = Calendar.getInstance();
+
+        String ext = Integer.toString(now.get(Calendar.YEAR));
+        ext += Integer.toString(now.get(Calendar.MONTH));
+        ext += Integer.toString(now.get(Calendar.DATE));
+        ext += Integer.toString(now.get(Calendar.HOUR));
+        ext += Integer.toString(now.get(Calendar.MINUTE));
+
         mFileName = Environment.getExternalStorageDirectory().getAbsolutePath();
-        mFileName += "/audiorecordtest.3gp";
+        mFileName += "/"+ext + ".3gp";
     }
+
     @Override
     public void onPause(){
 
