@@ -66,20 +66,30 @@ public class MainActivity extends ActionBarActivity {
         startPlay = true;
 
         timer = (Chronometer) findViewById(R.id.chronometer);
-        timer.setText("00:00");
+        timer.setText("0:00");
 
         //FileList
         lv = (ListView) findViewById(R.id.listView);
         myList = new ArrayList<String>();
         File directory = Environment.getExternalStorageDirectory();
-        file = new File(directory.getAbsolutePath());
+        file = new File(directory + "/Music");
+        if (!file.exists()) {
+            file.mkdir();
+        }
+
         File list[] = file.listFiles();
         for (int i = 0; i < list.length; i++) {
             myList.add(list[i].getName());
         }
-        ArrayAdapter<String> adapter = new ArrayAdapter<String>(this,
+        listAdapter = new ArrayAdapter<String>(this,
                 android.R.layout.simple_list_item_1, android.R.id.text1, myList);
-        lv.setAdapter(adapter); //Set all the file in the list.
+
+
+        listAdapter.notifyDataSetChanged();
+        lv.setAdapter(listAdapter); //Set all the file in the list.
+        lv.setChoiceMode(ListView.CHOICE_MODE_SINGLE);
+
+
     }
 
 
@@ -151,7 +161,7 @@ public class MainActivity extends ActionBarActivity {
             @Override
             public void onCompletion(MediaPlayer mp) {
                 timer.stop();
-                timer.setText("00:00");
+                timer.setText("0:00");
                 PlayButton.setText("Play");
                 startPlay = true;
                 RecButton.setEnabled(true);
@@ -162,7 +172,7 @@ public class MainActivity extends ActionBarActivity {
 
     private void stopPlaying() {
         timer.stop();
-        timer.setText("00:00");
+        timer.setText("0:00");
         mPlay.release();
         mPlay = null;
     }
@@ -188,7 +198,7 @@ public class MainActivity extends ActionBarActivity {
     private void stopRecording() {
         mRec.stop();
         timer.stop();
-        timer.setText("00:00");
+        timer.setText("0:00");
         mRec.release();
         mRec = null;
     }
@@ -240,13 +250,14 @@ public class MainActivity extends ActionBarActivity {
         Calendar now = Calendar.getInstance();
 
         String ext = Integer.toString(now.get(Calendar.YEAR));
-        ext += Integer.toString(now.get(Calendar.MONTH));
-        ext += Integer.toString(now.get(Calendar.DATE));
-        ext += Integer.toString(now.get(Calendar.HOUR));
-        ext += Integer.toString(now.get(Calendar.MINUTE));
+        ext = ext + ""+Integer.toString(now.get(Calendar.MONTH));
+        ext = ext + ""+Integer.toString(now.get(Calendar.DATE));
+        ext = ext + "_"+Integer.toString(now.get(Calendar.HOUR));
+        ext = ext + ""+Integer.toString(now.get(Calendar.MINUTE));
 
         mFileName = Environment.getExternalStorageDirectory().getAbsolutePath();
         mFileName += "/Music/"+ext + ".3gp";
+
     }
 
     @Override
