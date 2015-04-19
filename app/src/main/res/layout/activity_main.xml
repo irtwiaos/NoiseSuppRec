@@ -35,7 +35,7 @@
         android:textSize="40px"
         android:id="@+id/checkBox2"
         android:checked="false"
-        android:layout_marginTop="120px"
+        android:layout_marginTop="121px"
         android:layout_below="@+id/checkBox"
         android:layout_alignLeft="@+id/toggle" />
 
