@@ -1,1 +1,1 @@
-include ':app'
+include ':app', ':yourproject:libs:JTransforms-3.0'

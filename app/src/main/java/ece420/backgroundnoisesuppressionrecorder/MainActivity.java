@@ -25,10 +25,13 @@ import android.widget.ListView;
 import java.util.ArrayList;
 import java.util.Arrays;
 import android.app.ListActivity;
+import org.jtransforms.fft.DoubleFFT_1D;
+
 import java.io.File;
 import java.io.IOException;
 import java.util.Calendar;
 import java.util.List;
+
 
 import static android.view.View.*;
 
@@ -166,6 +169,7 @@ public class MainActivity extends ActionBarActivity {
     private void noiseRed(boolean ResNoise, boolean AddAtt){
         /*
         basic noise reduction algorithm
+
          */
         if(ResNoise){
             // call residual noise reduction
@@ -321,3 +325,5 @@ public class MainActivity extends ActionBarActivity {
         }
     }
 }
+
+
