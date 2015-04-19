@@ -13,6 +13,8 @@ import android.media.MediaPlayer;
 import android.widget.Button;
 import android.widget.Chronometer;
 import android.widget.ToggleButton;
+import android.widget.Switch;
+import android.widget.CheckBox;
 import android.util.Log;
 import android.view.View;
 import android.content.Context;
@@ -42,6 +44,10 @@ public class MainActivity extends ActionBarActivity {
     ToggleButton RecButton;
     Button PlayButton;
     Chronometer timer;
+    Switch NoiseReduction;
+    CheckBox ResNoise;
+    CheckBox AdditionalAtt;
+
 
     private boolean startPlay;
 
@@ -68,6 +74,11 @@ public class MainActivity extends ActionBarActivity {
         timer = (Chronometer) findViewById(R.id.chronometer);
         timer.setText("0:00");
 
+        NoiseReduction = (Switch) findViewById(R.id.switch1);
+
+        ResNoise = (CheckBox) findViewById(R.id.checkBox2);
+
+        AdditionalAtt = (CheckBox) findViewById(R.id.checkBox3);
         //FileList
         lv = (ListView) findViewById(R.id.listView);
         myList = new ArrayList<String>();
@@ -136,12 +147,30 @@ public class MainActivity extends ActionBarActivity {
                 NoiseRed(check box shit);
             }
             */
+            boolean NoiseRed = NoiseReduction.isChecked();
+            boolean ResidualNoise = ResNoise.isChecked();
+            boolean AdditionalAttenuation = AdditionalAtt.isChecked();
 
+            if(NoiseRed){
+                noiseRed(ResidualNoise, AdditionalAttenuation);
+            }   // if switch is on, call basic noise reduction function
             startPlaying();
         }
 
         else {
             stopPlaying();
+        }
+    }
+
+    private void noiseRed(boolean ResNoise, boolean AddAtt){
+        /*
+        basic noise reduction algorithm
+         */
+        if(ResNoise){
+            // call residual noise reduction
+        }
+        if(AddAtt){
+            // call additional signal attenuation
         }
     }
 
