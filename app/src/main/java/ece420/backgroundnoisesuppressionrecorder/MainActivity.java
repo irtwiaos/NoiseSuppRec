@@ -169,7 +169,6 @@ public class MainActivity extends ActionBarActivity {
     private void noiseRed(boolean ResNoise, boolean AddAtt){
         /*
         basic noise reduction algorithm */
-        DoubleFFT_1D fft = new DoubleFFT_1D(1024);
 
 
         if(ResNoise){
