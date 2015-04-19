@@ -44,6 +44,7 @@ public class MainActivity extends ActionBarActivity {
     ToggleButton RecButton;
     Button PlayButton;
     Chronometer timer;
+
     Switch NoiseReduction;
     CheckBox ResNoise;
     CheckBox AdditionalAtt;
