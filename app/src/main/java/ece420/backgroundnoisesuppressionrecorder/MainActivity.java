@@ -280,7 +280,7 @@ public class MainActivity extends ActionBarActivity {
         Calendar now = Calendar.getInstance();
 
         String ext = Integer.toString(now.get(Calendar.YEAR));
-        ext = ext + ""+Integer.toString(now.get(Calendar.MONTH))+1;
+        ext = ext + ""+Integer.toString(now.get(Calendar.MONTH)+1);
         ext = ext + ""+Integer.toString(now.get(Calendar.DATE));
         ext = ext + "_"+Integer.toString(now.get(Calendar.HOUR));
         ext = ext + ""+Integer.toString(now.get(Calendar.MINUTE));
