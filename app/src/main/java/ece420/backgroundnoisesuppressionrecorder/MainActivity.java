@@ -199,7 +199,6 @@ public class MainActivity extends ActionBarActivity {
             byte[] pcm = new byte[buf_info.size];
             outputBuffers[outputBufferIndex].get(pcm, 0, buf_info.size);
 
-
             if(ResNoise){
                 // call residual noise reduction
             }
