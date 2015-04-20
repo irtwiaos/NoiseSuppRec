@@ -2,8 +2,6 @@ package ece420.backgroundnoisesuppressionrecorder;
 
 import android.media.AudioRecord;
 import android.app.Activity;
-import android.media.MediaCodec;
-import android.media.MediaFormat;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.SystemClock;
@@ -24,8 +22,6 @@ import android.view.ViewGroup;
 import android.view.View.OnClickListener;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
-
-import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import android.app.ListActivity;
@@ -160,12 +156,7 @@ public class MainActivity extends ActionBarActivity {
             boolean AdditionalAttenuation = AdditionalAtt.isChecked();
 
             if(NoiseRed){
-                try {
-                    noiseRed(ResidualNoise, AdditionalAttenuation);
-                }
-                catch (IOException ex){
-                    ex.printStackTrace();
-                }
+                noiseRed(ResidualNoise, AdditionalAttenuation);
             }   // if switch is on, call basic noise reduction function
             startPlaying();
         }
@@ -175,7 +166,18 @@ public class MainActivity extends ActionBarActivity {
         }
     }
 
+    private void noiseRed(boolean ResNoise, boolean AddAtt){
+        /*
+        basic noise reduction algorithm
 
+         */
+        if(ResNoise){
+            // call residual noise reduction
+        }
+        if(AddAtt){
+            // call additional signal attenuation
+        }
+    }
 
     private void startPlaying() {
         mPlay = new MediaPlayer();
@@ -320,40 +322,6 @@ public class MainActivity extends ActionBarActivity {
         if (mPlay != null){
             mPlay.release();
             mPlay = null;
-        }
-    }
-
-    private void noiseRed(boolean ResNoise, boolean AddAtt) throws IOException{
-
-        //basic noise reduction algorithm
-
-        String mMime = "audio/3gpp";
-
-        MediaCodec codec = MediaCodec.createDecoderByType(mMime);
-
-        MediaFormat mMediaFormat = new MediaFormat();
-        mMediaFormat = MediaFormat.createAudioFormat(mMime,
-                mMediaFormat.getInteger(MediaFormat.KEY_SAMPLE_RATE),
-                mMediaFormat.getInteger(MediaFormat.KEY_CHANNEL_COUNT));
-
-        codec.configure(mMediaFormat, null, null, 0);
-        codec.start();
-
-        ByteBuffer[] inputBuffers = codec.getInputBuffers();
-        ByteBuffer[] outputBuffers = codec.getOutputBuffers();
-
-
-        MediaCodec.BufferInfo buf_info = new MediaCodec.BufferInfo();
-        int outputBufferIndex = codec.dequeueOutputBuffer(buf_info, 0);
-        byte[] pcm = new byte[buf_info.size];
-        outputBuffers[outputBufferIndex].get(pcm, 0, buf_info.size);
-
-
-        if(ResNoise){
-            // call residual noise reduction
-        }
-        if(AddAtt){
-            // call additional signal attenuation
         }
     }
 }
