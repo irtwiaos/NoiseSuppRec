@@ -7,6 +7,7 @@ import android.app.Activity;
 import android.media.AudioTrack;
 import android.media.MediaCodec;
 import android.media.MediaFormat;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.SystemClock;
@@ -68,6 +69,7 @@ public class MainActivity extends ActionBarActivity {
 
     private int size;
     private boolean startPlay;
+    private boolean isRec;
     private int min;
 
     DataInputStream data = null;
@@ -152,10 +154,15 @@ public class MainActivity extends ActionBarActivity {
     private void onRecord(boolean start){
         if (start){
             CreateFile();
-            startRecording();
+
+            startRecording record = new startRecording();
+            timer.setBase(SystemClock.elapsedRealtime());
+            timer.start();
+            record.execute();
         }
 
         else {
+            isRec = false;
             stopRecording();
         }
     }
@@ -172,7 +179,7 @@ public class MainActivity extends ActionBarActivity {
             boolean NoiseRed = NoiseReduction.isChecked();
             boolean ResidualNoise = ResNoise.isChecked();
             boolean AdditionalAttenuation = AdditionalAtt.isChecked();
-
+/*
             if(NoiseRed){
                 try {
                     noiseRed(ResidualNoise, AdditionalAttenuation);
@@ -180,7 +187,7 @@ public class MainActivity extends ActionBarActivity {
                 catch(IOException ex){
                    ex.printStackTrace();
                 }
-            }   // if switch is on, call basic noise reduction function
+            }   // if switch is on, call basic noise reduction function*/
             try {
                 startPlaying();
             } catch(IOException e){
@@ -192,7 +199,7 @@ public class MainActivity extends ActionBarActivity {
             stopPlaying();
         }
     }
-
+/*
     private void noiseRed(boolean ResNoise, boolean AddAtt)throws IOException{
 
             /*basic noise reduction algorithm                       MediaRecorder method -> XXXX
@@ -220,7 +227,7 @@ public class MainActivity extends ActionBarActivity {
 
 /********************** Create Spectrogram **************************/
         // grab the original sound as a double array from the readPCM function
-        double[] sound = readPCM();
+        /*double[] sound = readPCM();
         // get the noise signal-- first (0.4*sample rate) samples of the sound signal
         double[] noise = new double[17640];
         for (int i = 0; i < noise.length; i++){
@@ -233,7 +240,7 @@ public class MainActivity extends ActionBarActivity {
         double[][] SNoise = spectrogram(noise); // S_N in matlab
 /******************* END of Creating Spectrogram ******************/
         /* noise reduction algorithm */
-        int hopsize = 256; // directly from matlab
+       /* int hopsize = 256; // directly from matlab
         double[] avgSN = new double[hopsize+1]; // avg_SN
         int ColumnN = SNoise[0].length; // size(S_N, 2), number of colums of S_N
         for (int i = 0; i < avgSN.length; i++){
@@ -247,7 +254,7 @@ public class MainActivity extends ActionBarActivity {
 
         // 3-frame averaging not implemented
         /* bias removal and half-wave rectifying, suppose no average and no attenuation*/
-        double[][] SNew = new double[SizeRow][SizeColumn]; // S_new
+        /*double[][] SNew = new double[SizeRow][SizeColumn]; // S_new
         for (int i = 0; i < hopsize+1; i++){
             for (int j = 0; j < SizeColumn; j++){
                 SNew[i][j] = Math.abs(SSignal[i][j]) - 3*avgSN[i];
@@ -264,12 +271,12 @@ public class MainActivity extends ActionBarActivity {
                 // call additional signal attenuation
         }
     }
-
+/*
     private double[][] spectrogram(double[] sound){
         int framesize = 512;
         int noverlap = 256;
         double[] w = new double[framesize]; //Hann Window
-        /*double[] sound = new double[4096]; //original sound, just say it has 4096 samples*/
+        /*double[] sound = new double[4096]; //original sound, just say it has 4096 samples
         double[] framebuffer = new double [2*framesize];
         int ncol = (int) Math.floor((sound.length-noverlap)/(framesize-noverlap)); // how many columns of Spectrogram
         double[][] S = new double[framesize/2+1][ncol];     //Actual 2D Array holding Spectrogram
@@ -302,7 +309,7 @@ public class MainActivity extends ActionBarActivity {
         }
         return S;
     }
-
+*/
     private double[] readPCM() {
         double[] result = null;
         try {
@@ -382,41 +389,46 @@ public class MainActivity extends ActionBarActivity {
         mPlay = null;
     }
 
-    private void startRecording() {
+    private class startRecording extends AsyncTask<Void, Integer, Void>{
 
-        min = AudioRecord.getMinBufferSize(44100, AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT);
-        mRec = new AudioRecord(MediaRecorder.AudioSource.MIC, 44100, AudioFormat.CHANNEL_IN_MONO,
-                AudioFormat.ENCODING_PCM_16BIT, min);
+        @Override
+        protected Void doInBackground(Void... params) {
 
-        CreateFile();
+            isRec = true;
 
-        byte audioData[] = new byte[min];
-        android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_URGENT_AUDIO);
+            min = AudioRecord.getMinBufferSize(44100, AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT);
+            mRec = new AudioRecord(MediaRecorder.AudioSource.MIC, 44100, AudioFormat.CHANNEL_IN_MONO,
+                    AudioFormat.ENCODING_PCM_16BIT, min);
 
-        timer.setBase(SystemClock.elapsedRealtime());
-        timer.start();
-        mRec.startRecording();
+            //CreateFile();
 
-        try {
-            os = new BufferedOutputStream(new FileOutputStream(mFileName));
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-        while (true) {
-            int status = mRec.read(audioData, 0, audioData.length);
-
-            if (status == AudioRecord.ERROR_INVALID_OPERATION ||
-                    status == AudioRecord.ERROR_BAD_VALUE) {
-                return;
-            }
+            byte audioData[] = new byte[min];
+            android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_URGENT_AUDIO);
 
             try {
-                os.write(audioData, 0, audioData.length);
+                os = new BufferedOutputStream(new FileOutputStream(mFileName));
             } catch (IOException e) {
                 e.printStackTrace();
-                return;
             }
+
+            mRec.startRecording();
+            while (isRec) {
+                int status = mRec.read(audioData, 0, audioData.length);
+
+                if (status == AudioRecord.ERROR_INVALID_OPERATION ||
+                        status == AudioRecord.ERROR_BAD_VALUE) {
+                    //return;
+                }
+
+                try {
+                    os.write(audioData, 0, audioData.length);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                    //return;
+                }
+            }
+
+            return null;
         }
     }
 
@@ -441,16 +453,17 @@ public class MainActivity extends ActionBarActivity {
 
             @Override
             public void onClick(View v){
-                onRecord(startRec);
 
                 if (startRec){
                     RecButton.setChecked(true);
                     PlayButton.setEnabled(false);
+                    onRecord(startRec);
                 }
 
                 else{
                     RecButton.setChecked(false);
                     PlayButton.setEnabled(true);
+                    onRecord(startRec);
                 }
 
                 startRec = !startRec;
@@ -489,7 +502,7 @@ public class MainActivity extends ActionBarActivity {
         ext = ext + ""+Integer.toString(now.get(Calendar.MINUTE));
 
         mFileName = Environment.getExternalStorageDirectory().getAbsolutePath();
-        mFileName += "/Music/"+ext + ".3gp";
+        mFileName += "/Music/"+ext + ".pcm";
 
     }
 
