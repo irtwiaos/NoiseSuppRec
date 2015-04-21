@@ -231,10 +231,15 @@ public class MainActivity extends ActionBarActivity {
                 framebuffer[i+j]*= w[j];                // Apply Window
             }
             fft.complexForward(framebuffer);            // FFT and same to the original array (this is a feature of JTransform Library)
-            for (int j = 0; j <framesize; j++)             // Retain only half of temp array because FFT has redundant symmetrical conjugate.
+
+            for (int j = 0; j < ncol; j++)
             {
-                S[j][i]
+                for (int k = 0; k <framesize; k++)       // Retain only half of temp array because FFT has redundant symmetrical conjugate.
+                {
+                    S[k][j] = framebuffer[k];       // Save as Real Spectrogram
+                }
             }
+
 
         }
 
