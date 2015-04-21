@@ -239,7 +239,7 @@ public class MainActivity extends ActionBarActivity {
                     S[k][j] = framebuffer[k];       // Save as Real Spectrogram
                 }
             }
-
+/******************* END of Creating Spectrogram ******************/
 
         }
 
