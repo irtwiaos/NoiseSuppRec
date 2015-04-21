@@ -25,6 +25,11 @@ import android.view.View.OnClickListener;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
 
+import java.io.ByteArrayInputStream;
+import java.io.DataInputStream;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -56,8 +61,10 @@ public class MainActivity extends ActionBarActivity {
     CheckBox ResNoise;
     CheckBox AdditionalAtt;
 
-
+    private int size;
     private boolean startPlay;
+
+    DataInputStream data = null;
 
     private ListView lv;
     private ArrayAdapter<String> listAdapter ;
@@ -177,7 +184,7 @@ public class MainActivity extends ActionBarActivity {
 
     private void noiseRed(boolean ResNoise, boolean AddAtt)throws IOException{
 
-            //basic noise reduction algorithm
+            /*basic noise reduction algorithm                       MediaRecorder method -> XXXX
 
             String mMime = "audio/3gpp";
             MediaCodec codec = MediaCodec.createDecoderByType(mMime);
@@ -197,15 +204,126 @@ public class MainActivity extends ActionBarActivity {
             MediaCodec.BufferInfo buf_info = new MediaCodec.BufferInfo();
             int outputBufferIndex = codec.dequeueOutputBuffer(buf_info, 0);
             byte[] pcm = new byte[buf_info.size];
-            outputBuffers[outputBufferIndex].get(pcm, 0, buf_info.size);
+            outputBuffers[outputBufferIndex].get(pcm, 0, buf_info.size); */
 
 
-            if(ResNoise){
+/********************** Create Spectrogram **************************/
+        // grab the original sound as a double array from the readPCM function
+        double[] sound = readPCM();
+        // get the noise signal-- first (0.4*sample rate) samples of the sound signal
+        double[] noise = new double[17640];
+        for (int i = 0; i < noise.length; i++){
+            noise[i] = sound[i];
+        }
+        // create spectrogram of the whole signal and the noise
+        double[][] SSignal = spectrogram(sound); // S in matlab
+        int SizeRow = SSignal.length;
+        int SizeColumn = SSignal[0].length;
+        double[][] SNoise = spectrogram(noise); // S_N in matlab
+/******************* END of Creating Spectrogram ******************/
+        /* noise reduction algorithm */
+        int hopsize = 256; // directly from matlab
+        double[] avgSN = new double[hopsize+1]; // avg_SN
+        int ColumnN = SNoise[0].length; // size(S_N, 2), number of colums of S_N
+        for (int i = 0; i < avgSN.length; i++){
+            for (int j = 0; j < ColumnN; j++){
+                avgSN[i] = avgSN[i] + Math.abs(SNoise[i][j]); // summation, as as matlab
+            }
+        }
+        for (int i = 0; i < avgSN.length; i++){
+            avgSN[i] = avgSN[i]/ColumnN; // division to get avg, same as matlab
+        }
+
+        // 3-frame averaging not implemented
+        /* bias removal and half-wave rectifying, suppose no average and no attenuation*/
+        double[][] SNew = new double[SizeRow][SizeColumn]; // S_new
+        for (int i = 0; i < hopsize+1; i++){
+            for (int j = 0; j < SizeColumn; j++){
+                SNew[i][j] = Math.abs(SSignal[i][j]) - 3*avgSN[i];
+                if (SNew[i][j] < 0){
+                    SNew[i][j] = 0;
+                }
+            }
+        }
+
+        if(ResNoise){
                 // call residual noise reduction
-            }
-            if(AddAtt){
+        }
+        if(AddAtt){
                 // call additional signal attenuation
+        }
+    }
+
+    private double[][] spectrogram(double[] sound){
+        int framesize = 512;
+        int noverlap = 256;
+        double[] w = new double[framesize]; //Hann Window
+        /*double[] sound = new double[4096]; //original sound, just say it has 4096 samples*/
+        double[] framebuffer = new double [2*framesize];
+        int ncol = (int) Math.floor((sound.length-noverlap)/(framesize-noverlap)); // how many columns of Spectrogram
+        double[][] S = new double[framesize/2+1][ncol];     //Actual 2D Array holding Spectrogram
+        DoubleFFT_1D fft = new DoubleFFT_1D(2*framesize);
+
+        for (int n=0;n<2*framesize;n++)         //zero all elements in the temp array, for ***ZERO-PADDING***
+        {
+            framebuffer[n] = 0;
+        }
+
+        for (int n = 0; n < framesize; n++)     // Hann window
+        {
+            w[n] = 0.54 - 0.46*Math.cos(2*Math.PI*n/(framesize-1));
+        }
+
+        for (int i = 0; i < sound.length; i = i + noverlap) {
+            for (int j = 0; j < framesize; j++)         // Cut
+            {
+                framebuffer[i + j] = sound[i + j];
+                framebuffer[i + j] *= w[j];                // Apply Window
             }
+            fft.complexForward(framebuffer);            // FFT and same to the original array (this is a feature of JTransform Library)
+
+            for (int j = 0; j < ncol; j++) {
+                for (int k = 0; k < framesize; k++)       // Retain only half of temp array because FFT has redundant symmetrical conjugate.
+                {
+                    S[k][j] = framebuffer[k];       // Save as Real Spectrogram
+                }
+            }
+        }
+        return S;
+    }
+
+    private double[] readPCM() {
+        double[] result = null;
+        try {
+            File file = new File(mFileName);
+            InputStream in = new FileInputStream(file);
+            int bufferSize = (int) (file.length()/2);
+            int size = (int) file.length();
+            result = new double[bufferSize];
+            DataInputStream is = new DataInputStream(in);
+
+            for (int i = 0; i < bufferSize; i++) {
+                result[i] = is.readShort() / 32768.0;
+            }
+        } catch (FileNotFoundException e) {
+            Log.i("File not found", "" + e);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return result;
+    }
+
+    private void readPCMstream() {
+        try {
+            File file = new File(mFileName);
+            InputStream in = new FileInputStream(file);
+            int size = (int) file.length();
+            DataInputStream data = new DataInputStream(in);
+        } catch (FileNotFoundException e) {
+            Log.i("File not found", "" + e);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     private void startPlaying() {
@@ -241,6 +359,7 @@ public class MainActivity extends ActionBarActivity {
     }
 
     private void startRecording() {
+
         mRec = new MediaRecorder();
         mRec.setAudioSource(MediaRecorder.AudioSource.MIC);
         mRec.setOutputFormat(MediaRecorder.OutputFormat.THREE_GPP);
