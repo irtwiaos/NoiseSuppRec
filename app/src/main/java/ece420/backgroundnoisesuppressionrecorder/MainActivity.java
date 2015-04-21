@@ -1,7 +1,10 @@
 package ece420.backgroundnoisesuppressionrecorder;
 
+import android.media.AudioFormat;
+import android.media.AudioManager;
 import android.media.AudioRecord;
 import android.app.Activity;
+import android.media.AudioTrack;
 import android.media.MediaCodec;
 import android.media.MediaFormat;
 import android.os.Bundle;
@@ -25,10 +28,12 @@ import android.view.View.OnClickListener;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
 
+import java.io.BufferedOutputStream;
 import java.io.ByteArrayInputStream;
 import java.io.DataInputStream;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
@@ -50,8 +55,8 @@ public class MainActivity extends ActionBarActivity {
 
     private String mFileName = null;
 
-    private MediaRecorder mRec = null;
-    private MediaPlayer mPlay = null;
+    private AudioRecord mRec = null;
+    private AudioTrack mPlay = null;
 
     ToggleButton RecButton;
     Button PlayButton;
@@ -63,8 +68,10 @@ public class MainActivity extends ActionBarActivity {
 
     private int size;
     private boolean startPlay;
+    private int min;
 
     DataInputStream data = null;
+    BufferedOutputStream os = null;
 
     private ListView lv;
     private ArrayAdapter<String> listAdapter ;
@@ -174,7 +181,11 @@ public class MainActivity extends ActionBarActivity {
                    ex.printStackTrace();
                 }
             }   // if switch is on, call basic noise reduction function
-            startPlaying();
+            try {
+                startPlaying();
+            } catch(IOException e){
+                e.printStackTrace();
+            }
         }
 
         else {
@@ -298,7 +309,7 @@ public class MainActivity extends ActionBarActivity {
             File file = new File(mFileName);
             InputStream in = new FileInputStream(file);
             int bufferSize = (int) (file.length()/2);
-            int size = (int) file.length();
+            size = (int) file.length();
             result = new double[bufferSize];
             DataInputStream is = new DataInputStream(in);
 
@@ -326,29 +337,42 @@ public class MainActivity extends ActionBarActivity {
         }
     }
 
-    private void startPlaying() {
-        mPlay = new MediaPlayer();
+    private void startPlaying() throws IOException{
+        readPCMstream();
+
+        int maxJitter = AudioTrack.getMinBufferSize(44100, AudioFormat.CHANNEL_OUT_MONO, AudioFormat.ENCODING_PCM_16BIT);
+        mPlay = new AudioTrack(AudioManager.STREAM_MUSIC, 44100, AudioFormat.CHANNEL_OUT_MONO,
+                AudioFormat.ENCODING_PCM_16BIT, maxJitter, AudioTrack.MODE_STREAM);
+
+        int bytesread = 0;
+        int ret;
+        int count = 512*1024;
+
+        byte [] byteData = new byte[count];
         timer.setBase(SystemClock.elapsedRealtime());
         timer.start();
-        try {
-            mPlay.setDataSource(mFileName);
-            mPlay.prepare();
-            mPlay.start();
-        } catch (IOException e) {
-            e.printStackTrace();
+
+        mPlay.play();
+
+        while (bytesread < size){
+
+            ret = data.read(byteData,0, count);
+
+            if(ret!=-1) {
+                mPlay.write(byteData, 0, ret);
+                bytesread += ret;
+            }
+            else {
+                break;
+            }
+
         }
 
-        mPlay.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
-            @Override
-            public void onCompletion(MediaPlayer mp) {
-                timer.stop();
-                timer.setText("0:00");
-                PlayButton.setText("Play");
-                startPlay = true;
-                RecButton.setEnabled(true);
-
-            }
-        });
+        timer.stop();
+        timer.setText("0:00");
+        PlayButton.setText("Play");
+        startPlay = true;
+        RecButton.setEnabled(true);
     }
 
     private void stopPlaying() {
@@ -360,27 +384,54 @@ public class MainActivity extends ActionBarActivity {
 
     private void startRecording() {
 
-        mRec = new MediaRecorder();
-        mRec.setAudioSource(MediaRecorder.AudioSource.MIC);
-        mRec.setOutputFormat(MediaRecorder.OutputFormat.THREE_GPP);
-        mRec.setOutputFile(mFileName);
-        mRec.setAudioEncoder(MediaRecorder.AudioEncoder.AMR_NB);
+        min = AudioRecord.getMinBufferSize(44100, AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT);
+        mRec = new AudioRecord(MediaRecorder.AudioSource.MIC, 44100, AudioFormat.CHANNEL_IN_MONO,
+                AudioFormat.ENCODING_PCM_16BIT, min);
+
+        CreateFile();
+
+        byte audioData[] = new byte[min];
+        android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_URGENT_AUDIO);
+
+        timer.setBase(SystemClock.elapsedRealtime());
+        timer.start();
+        mRec.startRecording();
 
         try {
-            mRec.prepare();
+            os = new BufferedOutputStream(new FileOutputStream(mFileName));
         } catch (IOException e) {
             e.printStackTrace();
         }
 
-        timer.setBase(SystemClock.elapsedRealtime());
-        timer.start();
-        mRec.start();
+        while (true) {
+            int status = mRec.read(audioData, 0, audioData.length);
+
+            if (status == AudioRecord.ERROR_INVALID_OPERATION ||
+                    status == AudioRecord.ERROR_BAD_VALUE) {
+                return;
+            }
+
+            try {
+                os.write(audioData, 0, audioData.length);
+            } catch (IOException e) {
+                e.printStackTrace();
+                return;
+            }
+        }
     }
 
     private void stopRecording() {
         mRec.stop();
+
         timer.stop();
         timer.setText("0:00");
+
+        try {
+            os.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
         mRec.release();
         mRec = null;
     }
@@ -473,5 +524,3 @@ public class MainActivity extends ActionBarActivity {
         }
     }
 }
-
-
