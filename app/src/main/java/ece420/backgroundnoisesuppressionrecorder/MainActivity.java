@@ -25,6 +25,8 @@ import android.view.View.OnClickListener;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
 
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -177,7 +179,7 @@ public class MainActivity extends ActionBarActivity {
 
     private void noiseRed(boolean ResNoise, boolean AddAtt)throws IOException{
 
-            //basic noise reduction algorithm
+            /*basic noise reduction algorithm                       MediaRecorder method -> XXXX
 
             String mMime = "audio/3gpp";
             MediaCodec codec = MediaCodec.createDecoderByType(mMime);
@@ -197,9 +199,46 @@ public class MainActivity extends ActionBarActivity {
             MediaCodec.BufferInfo buf_info = new MediaCodec.BufferInfo();
             int outputBufferIndex = codec.dequeueOutputBuffer(buf_info, 0);
             byte[] pcm = new byte[buf_info.size];
-            outputBuffers[outputBufferIndex].get(pcm, 0, buf_info.size);
+            outputBuffers[outputBufferIndex].get(pcm, 0, buf_info.size); */
 
-            if(ResNoise){
+
+/********************** Create Spectrogram **************************/
+            /*Assume there is a buffer named "sound" */
+        int framesize = 512;
+        int noverlap = 256;
+        double[] w = new double[framesize]; //Hann Window
+        double[] sound = new double[4096]; //original sound, just say it has 4096 samples
+        double[] framebuffer = new double [2*framesize];
+        int ncol = (int) Math.floor((sound.length-noverlap)/(framesize-noverlap)); // how many columns of Spectrogram
+        double[][] S = new double[framesize/2+1][ncol];     //Actual 2D Array holding Spectrogram
+        DoubleFFT_1D fft = new DoubleFFT_1D(2*framesize);
+
+        for (int n=0;n<2*framesize;n++)         //zero all elements in the temp array, for ***ZERO-PADDING***
+        {
+            framebuffer[n] = 0;
+        }
+
+        for (int n = 0; n < framesize; n++)     // Hann window
+        {
+            w[n] = 0.54 - 0.46*Math.cos(2*Math.PI*n/(framesize-1));
+        }
+
+        for (int i = 0; i < sound.length; i = i + noverlap)
+        {
+            for (int j = 0; j < framesize; j++)         // Cut
+            {
+                framebuffer[i+j] = sound[i+j];
+                framebuffer[i+j]*= w[j];                // Apply Window
+            }
+            fft.complexForward(framebuffer);            // FFT and same to the original array (this is a feature of JTransform Library)
+            for (int j = 0; j <framesize; j++)             // Retain only half of temp array because FFT has redundant symmetrical conjugate.
+            {
+                S[j][i]
+            }
+
+        }
+
+        if(ResNoise){
                 // call residual noise reduction
             }
             if(AddAtt){
@@ -240,6 +279,7 @@ public class MainActivity extends ActionBarActivity {
     }
 
     private void startRecording() {
+
         mRec = new MediaRecorder();
         mRec.setAudioSource(MediaRecorder.AudioSource.MIC);
         mRec.setOutputFormat(MediaRecorder.OutputFormat.THREE_GPP);
