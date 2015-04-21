@@ -71,6 +71,7 @@ public class MainActivity extends ActionBarActivity {
     private boolean startPlay;
     private boolean isRec;
     private int min;
+    private boolean isCont;
 
     DataInputStream data = null;
     BufferedOutputStream os = null;
@@ -188,15 +189,19 @@ public class MainActivity extends ActionBarActivity {
                    ex.printStackTrace();
                 }
             }   // if switch is on, call basic noise reduction function*/
-            try {
-                startPlaying();
-            } catch(IOException e){
-                e.printStackTrace();
-            }
+
+            //startPlaying();
+            isCont = true;
+            startPlaying isPlay = new startPlaying();
+            timer.setBase(SystemClock.elapsedRealtime());
+            timer.start();
+            isPlay.execute();
         }
 
         else {
-            stopPlaying();
+            //mPlay.stop();
+            isCont = false;
+            //stopPlaying();
         }
     }
 /*
@@ -335,8 +340,8 @@ public class MainActivity extends ActionBarActivity {
         try {
             File file = new File(mFileName);
             InputStream in = new FileInputStream(file);
-            int size = (int) file.length();
-            DataInputStream data = new DataInputStream(in);
+            size = (int) file.length();
+            data = new DataInputStream(in);
         } catch (FileNotFoundException e) {
             Log.i("File not found", "" + e);
         } catch (IOException e) {
@@ -344,49 +349,56 @@ public class MainActivity extends ActionBarActivity {
         }
     }
 
-    private void startPlaying() throws IOException{
-        readPCMstream();
+    private class startPlaying extends AsyncTask<Void, Integer, Void> {
 
-        int maxJitter = AudioTrack.getMinBufferSize(44100, AudioFormat.CHANNEL_OUT_MONO, AudioFormat.ENCODING_PCM_16BIT);
-        mPlay = new AudioTrack(AudioManager.STREAM_MUSIC, 44100, AudioFormat.CHANNEL_OUT_MONO,
-                AudioFormat.ENCODING_PCM_16BIT, maxJitter, AudioTrack.MODE_STREAM);
+        @Override
+        protected Void doInBackground(Void... params) {
+            readPCMstream();
 
-        int bytesread = 0;
-        int ret;
-        int count = 512*1024;
+            int maxJitter = AudioTrack.getMinBufferSize(44100, AudioFormat.CHANNEL_OUT_MONO, AudioFormat.ENCODING_PCM_16BIT);
+            mPlay = new AudioTrack(AudioManager.STREAM_MUSIC, 44100, AudioFormat.CHANNEL_OUT_MONO,
+                    AudioFormat.ENCODING_PCM_16BIT, maxJitter, AudioTrack.MODE_STREAM);
 
-        byte [] byteData = new byte[count];
-        timer.setBase(SystemClock.elapsedRealtime());
-        timer.start();
+            int bytesread = 0;
+            int ret = -1;
+            int count = 512;
 
-        mPlay.play();
+            byte[] byteData = new byte[count];
 
-        while (bytesread < size){
+            mPlay.play();
 
-            ret = data.read(byteData,0, count);
+            while (bytesread < size && isCont) {
 
-            if(ret!=-1) {
-                mPlay.write(byteData, 0, ret);
-                bytesread += ret;
+                try {
+                    ret = data.read(byteData, 0, count);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+
+                if (ret != -1) {
+                    mPlay.write(byteData, 0, ret);
+                    bytesread += ret;
+                } else {
+                    break;
+                }
             }
-            else {
-                break;
-            }
-
+            return null;
         }
+
+        protected void onPostExecute(Void result) {
+            mPlay.stop();
+            stopPlaying();
+        }
+    }
+
+    private void stopPlaying() {
 
         timer.stop();
         timer.setText("0:00");
         PlayButton.setText("Play");
         startPlay = true;
         RecButton.setEnabled(true);
-    }
-
-    private void stopPlaying() {
-        timer.stop();
-        timer.setText("0:00");
         mPlay.release();
-        mPlay = null;
     }
 
     private class startRecording extends AsyncTask<Void, Integer, Void>{
