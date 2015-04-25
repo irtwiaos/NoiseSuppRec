@@ -268,6 +268,7 @@ import static android.view.View.*;
                 // call additional signal attenuation
             }
 
+
         }
 
         private double[][] spectrogram(double[] sound) {
