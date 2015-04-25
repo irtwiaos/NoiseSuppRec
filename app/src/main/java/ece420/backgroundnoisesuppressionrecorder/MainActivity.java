@@ -204,15 +204,15 @@ public class MainActivity extends ActionBarActivity {
             //stopPlaying();
         }
     }
-/*
+    private void noiseRed(boolean ResNoise, boolean AddAtt)throws IOException {
 
 
-    //********************** Create Spectrogram **************************
+        //********************** Create Spectrogram **************************
         // grab the original sound as a double array from the readPCM function
-        /*double[] sound = readPCM();
+        double[] sound = readPCM();
         // get the noise signal-- first (0.4*sample rate) samples of the sound signal
         double[] noise = new double[17640];
-        for (int i = 0; i < noise.length; i++){
+        for (int i = 0; i < noise.length; i++) {
             noise[i] = sound[i];
         }
         // create spectrogram of the whole signal and the noise
@@ -223,42 +223,42 @@ public class MainActivity extends ActionBarActivity {
 
         // noise reduction algorithm
         int hopsize = 256; // directly from matlab
-        double[] avgSN = new double[hopsize+1]; // avg_SN
+        double[] avgSN = new double[hopsize + 1]; // avg_SN
         int ColumnN = SNoise[0].length; // size(S_N, 2), number of colums of S_N
-        for (int i = 0; i < avgSN.length; i++){
-            for (int j = 0; j < ColumnN; j++){
+        for (int i = 0; i < avgSN.length; i++) {
+            for (int j = 0; j < ColumnN; j++) {
                 avgSN[i] = avgSN[i] + Math.abs(SNoise[i][j]); // summation, as as matlab
             }
         }
-        for (int i = 0; i < avgSN.length; i++){
-            avgSN[i] = avgSN[i]/ColumnN; // division to get avg, same as matlab
+        for (int i = 0; i < avgSN.length; i++) {
+            avgSN[i] = avgSN[i] / ColumnN; // division to get avg, same as matlab
         }
 
         // 3-frame averaging not implemented
         /* bias removal and half-wave rectifying, suppose no average and no attenuation*/
-        /*double[][] SNew = new double[SizeRow][SizeColumn]; // S_new
-        for (int i = 0; i < hopsize+1; i++){
-            for (int j = 0; j < SizeColumn; j++){
-                SNew[i][j] = Math.abs(SSignal[i][j]) - 3*avgSN[i];
-                if (SNew[i][j] < 0){
+        double[][] SNew = new double[SizeRow][SizeColumn]; // S_new
+        for (int i = 0; i < hopsize + 1; i++) {
+            for (int j = 0; j < SizeColumn; j++) {
+                SNew[i][j] = Math.abs(SSignal[i][j]) - 3 * avgSN[i];
+                if (SNew[i][j] < 0) {
                     SNew[i][j] = 0;
                 }
             }
         }
 
-        if(ResNoise){
-                // call residual noise reduction
+        if (ResNoise) {
+            // call residual noise reduction
         }
-        if(AddAtt){
-                // call additional signal attenuation
+        if (AddAtt) {
+            // call additional signal attenuation
         }
-    }*/
+    }
 
     private double[][] spectrogram(double[] sound){
         int framesize = 512;
         int noverlap = 256;
         double[] w = new double[framesize]; //Hann Window
-        sound = new double[4096]; //original sound, just say it has 4096 samples
+        //sound = new double[4096]; //original sound, just say it has 4096 samples
         double[] framebuffer = new double [2*framesize];
         int ncol = (int) Math.floor((sound.length-noverlap)/(framesize-noverlap)); // how many columns of Spectrogram
         double[][] S = new double[framesize/2+1][ncol];     //Actual 2D Array holding Spectrogram
