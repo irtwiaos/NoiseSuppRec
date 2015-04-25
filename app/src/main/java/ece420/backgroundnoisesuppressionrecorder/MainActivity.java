@@ -271,28 +271,28 @@ import static android.view.View.*;
 
         }
 
-        private double[][] spectrogram(double[] sound) {
+        private double[][] spectrogram(double[] sound){
             int framesize = 512;
             int noverlap = 256;
             double[] w = new double[framesize]; //Hann Window
-            sound = new double[4096]; //original sound, just say it has 4096 samples
-            double[] framebuffer = new double[2 * framesize];
-            int ncol = (int) Math.floor((sound.length - noverlap) / (framesize - noverlap)); // how many columns of Spectrogram
-            double[][] S = new double[framesize / 2 + 1][ncol];     //Actual 2D Array holding Spectrogram
-            DoubleFFT_1D fft = new DoubleFFT_1D(2 * framesize);
+            //sound = new double[4096]; //original sound, just say it has 4096 samples
+            double[] framebuffer = new double [2*framesize];
+            int ncol = (int) Math.floor((sound.length-noverlap)/(framesize-noverlap)); // how many columns of Spectrogram
+            double[][] S = new double[(framesize/2+1)*2][ncol];     //Actual 2D Array holding Spectrogram
+            DoubleFFT_1D fft = new DoubleFFT_1D(4*framesize); //framebuffer = 2*framesize; fftsize = 2*framebuffer
 
-            for (int n = 0; n < 2 * framesize; n++)         //zero all elements in the temp array, for ***ZERO-PADDING***
+            for (int n=0;n<2*framesize;n++)         //zero all elements in the temp array, for ***ZERO-PADDING***
             {
                 framebuffer[n] = 0;
             }
 
             for (int n = 0; n < framesize; n++)     // Hann window
             {
-                w[n] = 0.54 - 0.46 * Math.cos(2 * Math.PI * n / (framesize - 1));
+                w[n] = 0.54 - 0.46*Math.cos(2*Math.PI*n/(framesize-1));
             }
 
             for (int i = 0; i < sound.length; i = i + noverlap) {
-                for (int j = 0; j < framesize; j++)         // Cut
+                for (int j = 0; j < framesize; j++)         // Cut in half
                 {
                     framebuffer[i + j] = sound[i + j];
                     framebuffer[i + j] *= w[j];                // Apply Window
@@ -302,7 +302,7 @@ import static android.view.View.*;
                 for (int j = 0; j < ncol; j++) {
                     for (int k = 0; k < framesize; k++)       // Retain only half of temp array because FFT has redundant symmetrical conjugate.
                     {
-                        S[k][j] = framebuffer[k];       // Save as Real Spectrogram
+                        S[k][j] = framebuffer[k];       // Save as Output Spectrogram
                     }
                 }
             }
