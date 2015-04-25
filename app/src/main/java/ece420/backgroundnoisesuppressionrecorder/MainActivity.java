@@ -338,7 +338,7 @@ import static android.view.View.*;
             File file = new File(mFileName);
             InputStream in = null;
             if (file.isFile()) {
-                //long size = file.length();
+                size = (int)file.length();
                 try {
                     in = new FileInputStream(file);
                     data = new DataInputStream(in);
@@ -512,6 +512,7 @@ import static android.view.View.*;
             mFileName += "/Music/" + ext + ".pcm";
 
         }
+
 
         @Override
         public void onPause() {
