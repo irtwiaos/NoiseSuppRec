@@ -50,126 +50,124 @@ import java.util.List;
 
 import static android.view.View.*;
 
-public class MainActivity extends ActionBarActivity {
+    public class MainActivity extends ActionBarActivity {
 
-    //private static final String LOG_TAG = "AudioRecordTest";
+        //private static final String LOG_TAG = "AudioRecordTest";
 
-    private String mFileName = null;
+        private String mFileName = null;
 
-    private AudioRecord mRec = null;
-    private AudioTrack mPlay = null;
+        private AudioRecord mRec = null;
+        private AudioTrack mPlay = null;
 
-    ToggleButton RecButton;
-    Button PlayButton;
-    Chronometer timer;
+        ToggleButton RecButton;
+        Button PlayButton;
+        Chronometer timer;
 
-    Switch NoiseReduction;
-    CheckBox ResNoise;
-    CheckBox AdditionalAtt;
+        Switch NoiseReduction;
+        CheckBox ResNoise;
+        CheckBox AdditionalAtt;
 
-    private int size;
-    private boolean startPlay;
-    private boolean isRec;
-    private int min;
-    private boolean isCont;
+        private int size;
+        private boolean startPlay;
+        private boolean isRec;
+        private int min;
+        private boolean isCont;
 
-    DataInputStream data = null;
-    BufferedOutputStream os = null;
+        DataInputStream data = null;
+        BufferedOutputStream os = null;
 
-    private ListView lv;
-    private ArrayAdapter<String> listAdapter ;
+        private ListView lv;
+        private ArrayAdapter<String> listAdapter;
 
-    private List<String> myList;
-    File file;
+        private List<String> myList;
+        File file;
 
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
+        @Override
+        protected void onCreate(Bundle savedInstanceState) {
+            super.onCreate(savedInstanceState);
+            setContentView(R.layout.activity_main);
 
-        RecButton = (ToggleButton) findViewById(R.id.toggle);
-        RecButton.setOnClickListener(RecClick);
-        RecButton.setChecked(false);
+            RecButton = (ToggleButton) findViewById(R.id.toggle);
+            RecButton.setOnClickListener(RecClick);
+            RecButton.setChecked(false);
 
-        PlayButton = (Button) findViewById(R.id.button);
-        PlayButton.setOnClickListener(PlayClick);
-        PlayButton.setText("Play");
-        startPlay = true;
+            PlayButton = (Button) findViewById(R.id.button);
+            PlayButton.setOnClickListener(PlayClick);
+            PlayButton.setText("Play");
+            startPlay = true;
 
-        timer = (Chronometer) findViewById(R.id.chronometer);
-        timer.setText("0:00");
+            timer = (Chronometer) findViewById(R.id.chronometer);
+            timer.setText("0:00");
 
-        NoiseReduction = (Switch) findViewById(R.id.switch1);
+            NoiseReduction = (Switch) findViewById(R.id.switch1);
 
-        ResNoise = (CheckBox) findViewById(R.id.checkBox2);
+            ResNoise = (CheckBox) findViewById(R.id.checkBox2);
 
-        AdditionalAtt = (CheckBox) findViewById(R.id.checkBox3);
-        //FileList
-        lv = (ListView) findViewById(R.id.listView);
-        myList = new ArrayList<String>();
-        File directory = Environment.getExternalStorageDirectory();
-        file = new File(directory + "/Music");
-        if (!file.exists()) {
-            file.mkdir();
+            AdditionalAtt = (CheckBox) findViewById(R.id.checkBox3);
+            //FileList
+            lv = (ListView) findViewById(R.id.listView);
+            myList = new ArrayList<String>();
+            File directory = Environment.getExternalStorageDirectory();
+            file = new File(directory + "/Music");
+            if (!file.exists()) {
+                file.mkdir();
+            }
+
+            File list[] = file.listFiles();
+            for (int i = 0; i < list.length; i++) {
+                myList.add(list[i].getName());
+            }
+            listAdapter = new ArrayAdapter<String>(this,
+                    android.R.layout.simple_list_item_1, android.R.id.text1, myList);
+
+
+            listAdapter.notifyDataSetChanged();
+            lv.setAdapter(listAdapter); //Set all the file in the list.
+            lv.setChoiceMode(ListView.CHOICE_MODE_SINGLE);
+
+
         }
 
-        File list[] = file.listFiles();
-        for (int i = 0; i < list.length; i++) {
-            myList.add(list[i].getName());
-        }
-        listAdapter = new ArrayAdapter<String>(this,
-                android.R.layout.simple_list_item_1, android.R.id.text1, myList);
 
-
-        listAdapter.notifyDataSetChanged();
-        lv.setAdapter(listAdapter); //Set all the file in the list.
-        lv.setChoiceMode(ListView.CHOICE_MODE_SINGLE);
-
-
-    }
-
-
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu; this adds items to the action bar if it is present.
-        getMenuInflater().inflate(R.menu.menu_main, menu);
-        return true;
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
-        int id = item.getItemId();
-
-        //noinspection SimplifiableIfStatement
-        if (id == R.id.action_settings) {
+        @Override
+        public boolean onCreateOptionsMenu(Menu menu) {
+            // Inflate the menu; this adds items to the action bar if it is present.
+            getMenuInflater().inflate(R.menu.menu_main, menu);
             return true;
         }
 
-        return super.onOptionsItemSelected(item);
-    }
+        @Override
+        public boolean onOptionsItemSelected(MenuItem item) {
+            // Handle action bar item clicks here. The action bar will
+            // automatically handle clicks on the Home/Up button, so long
+            // as you specify a parent activity in AndroidManifest.xml.
+            int id = item.getItemId();
 
+            //noinspection SimplifiableIfStatement
+            if (id == R.id.action_settings) {
+                return true;
+            }
 
-    private void onRecord(boolean start){
-        if (start){
-            CreateFile();
-
-            startRecording record = new startRecording();
-            timer.setBase(SystemClock.elapsedRealtime());
-            timer.start();
-            record.execute();
+            return super.onOptionsItemSelected(item);
         }
 
-        else {
-            isRec = false;
-            stopRecording();
-        }
-    }
 
-    private void onPlay(boolean start) {
-        if (start) {
+        private void onRecord(boolean start) {
+            if (start) {
+                CreateFile();
+
+                startRecording record = new startRecording();
+                timer.setBase(SystemClock.elapsedRealtime());
+                timer.start();
+                record.execute();
+            } else {
+                isRec = false;
+                stopRecording();
+            }
+        }
+
+        private void onPlay(boolean start) {
+            if (start) {
 
             /*get switch and checkbox options
 
@@ -177,9 +175,9 @@ public class MainActivity extends ActionBarActivity {
                 NoiseRed(check box shit);
             }
             */
-            boolean NoiseRed = NoiseReduction.isChecked();
-            boolean ResidualNoise = ResNoise.isChecked();
-            boolean AdditionalAttenuation = AdditionalAtt.isChecked();
+                boolean NoiseRed = NoiseReduction.isChecked();
+                boolean ResidualNoise = ResNoise.isChecked();
+                boolean AdditionalAttenuation = AdditionalAtt.isChecked();
 /*
             if(NoiseRed){
                 try {
@@ -190,266 +188,287 @@ public class MainActivity extends ActionBarActivity {
                 }
             }   // if switch is on, call basic noise reduction function*/
 
-            //startPlaying();
-            isCont = true;
-            startPlaying isPlay = new startPlaying();
-            timer.setBase(SystemClock.elapsedRealtime());
-            timer.start();
-            isPlay.execute();
-        }
-
-        else {
-            //mPlay.stop();
-            isCont = false;
-            //stopPlaying();
-        }
-    }
-    private void noiseRed(boolean ResNoise, boolean AddAtt)throws IOException {
-
-
-        //********************** Create Spectrogram **************************
-        // grab the original sound as a double array from the readPCM function
-        double[] sound = readPCM();
-        // get the noise signal-- first (0.4*sample rate) samples of the sound signal
-        double[] noise = new double[17640];
-        for (int i = 0; i < noise.length; i++) {
-            noise[i] = sound[i];
-        }
-        // create spectrogram of the whole signal and the noise
-        double[][] SSignal = spectrogram(sound); // S in matlab
-        int SizeRow = SSignal.length;
-        int SizeColumn = SSignal[0].length;
-        double[][] SNoise = spectrogram(noise); // S_N in matlab
-
-        // noise reduction algorithm
-        int hopsize = 256; // directly from matlab
-        double[] avgSN = new double[hopsize + 1]; // avg_SN
-        int ColumnN = SNoise[0].length; // size(S_N, 2), number of colums of S_N
-        for (int i = 0; i < avgSN.length; i++) {
-            for (int j = 0; j < ColumnN; j++) {
-                avgSN[i] = avgSN[i] + Math.abs(SNoise[i][j]); // summation, as as matlab
+                //startPlaying();
+                isCont = true;
+                startPlaying isPlay = new startPlaying();
+                timer.setBase(SystemClock.elapsedRealtime());
+                timer.start();
+                isPlay.execute();
+            } else {
+                //mPlay.stop();
+                isCont = false;
+                //stopPlaying();
             }
         }
-        for (int i = 0; i < avgSN.length; i++) {
-            avgSN[i] = avgSN[i] / ColumnN; // division to get avg, same as matlab
-        }
 
-        // 3-frame averaging not implemented
+
+        private void noiseRed(boolean ResNoise, boolean AddAtt) throws IOException {
+            //********************** Create Spectrogram **************************
+            // grab the original sound as a double array from the readPCM function
+            double[] sound = readPCM();
+            // get the noise signal-- first (0.4*sample rate) samples of the sound signal
+            double[] noise = new double[17640];
+            for (int i = 0; i < noise.length; i++) {
+                noise[i] = sound[i];
+            }
+            // create spectrogram of the whole signal and the noise
+            double[][] SSignal_raw = spectrogram(sound); // S in matlab
+            int SizeRow = SSignal_raw.length/2;
+            int SizeColumn = SSignal_raw[0].length;
+            double[][] SNoise_raw = spectrogram(noise); // S_N in matlab
+            int ColumnN = SNoise_raw[0].length; // size(S_N, 2), number of colums of S_N
+            int RowN = SNoise_raw.length/2;
+
+            double[][] SNoise = new double [RowN][ColumnN];
+            for (int i = 0; i < ColumnN; i++){
+                for (int j = 0; j < RowN; j++){
+                    SNoise[i][j] = Math.sqrt(SNoise_raw[i][2*j]*SNoise_raw[i][2*j] + SNoise_raw[i][2*j+1]*SNoise_raw[i][2*j+1]);
+                }
+            }
+            double[][] SSignal = new double [SizeRow][SizeColumn];
+            for (int i = 0; i < SizeColumn; i++){
+                for (int j = 0; j < SizeRow; j++){
+                    SSignal[i][j] = Math.sqrt(SSignal_raw[i][2*j]*SSignal_raw[i][2*j] + SSignal_raw[i][2*j+1]*SSignal_raw[i][2*j+1]);
+                }
+            }
+
+            // noise reduction algorithm
+            int hopsize = 256; // directly from matlab
+            double[] avgSN = new double[hopsize + 1]; // avg_SN
+            for (int i = 0; i < avgSN.length; i++) {
+                for (int j = 0; j < ColumnN; j++) {
+                    avgSN[i] = avgSN[i] + Math.abs(SNoise[i][j]); // summation, as as matlab
+                }
+            }
+            for (int i = 0; i < avgSN.length; i++) {
+                avgSN[i] = avgSN[i] / ColumnN; // division to get avg, same as matlab
+            }
+
+            // 3-frame averaging not implemented
         /* bias removal and half-wave rectifying, suppose no average and no attenuation*/
-        double[][] SNew = new double[SizeRow][SizeColumn]; // S_new
-        for (int i = 0; i < hopsize + 1; i++) {
-            for (int j = 0; j < SizeColumn; j++) {
-                SNew[i][j] = Math.abs(SSignal[i][j]) - 3 * avgSN[i];
-                if (SNew[i][j] < 0) {
-                    SNew[i][j] = 0;
+            double[][] SNew = new double[SizeRow][SizeColumn]; // S_new
+            for (int i = 0; i < hopsize + 1; i++) {
+                for (int j = 0; j < SizeColumn; j++) {
+                    SNew[i][j] = Math.abs(SSignal[i][j]) - 3 * avgSN[i];
+                    if (SNew[i][j] < 0) {
+                        SNew[i][j] = 0;
+                    }
                 }
             }
+            for (int i = 0; i < hopsize + 1; i++) {
+                for (int j = 0; j < SizeColumn; j++) {
+                    SNew[i][j] = SNew[i][j];
+                }
+            }
+
+            if (ResNoise) {
+                // call residual noise reduction
+            }
+            if (AddAtt) {
+                // call additional signal attenuation
+            }
+
         }
 
-        if (ResNoise) {
-            // call residual noise reduction
-        }
-        if (AddAtt) {
-            // call additional signal attenuation
-        }
-    }
+        private double[][] spectrogram(double[] sound) {
+            int framesize = 512;
+            int noverlap = 256;
+            double[] w = new double[framesize]; //Hann Window
+            sound = new double[4096]; //original sound, just say it has 4096 samples
+            double[] framebuffer = new double[2 * framesize];
+            int ncol = (int) Math.floor((sound.length - noverlap) / (framesize - noverlap)); // how many columns of Spectrogram
+            double[][] S = new double[framesize / 2 + 1][ncol];     //Actual 2D Array holding Spectrogram
+            DoubleFFT_1D fft = new DoubleFFT_1D(2 * framesize);
 
-    private double[][] spectrogram(double[] sound){
-        int framesize = 512;
-        int noverlap = 256;
-        double[] w = new double[framesize]; //Hann Window
-        //sound = new double[4096]; //original sound, just say it has 4096 samples
-        double[] framebuffer = new double [2*framesize];
-        int ncol = (int) Math.floor((sound.length-noverlap)/(framesize-noverlap)); // how many columns of Spectrogram
-        double[][] S = new double[framesize/2+1][ncol];     //Actual 2D Array holding Spectrogram
-        DoubleFFT_1D fft = new DoubleFFT_1D(2*framesize);
-
-        for (int n=0;n<2*framesize;n++)         //zero all elements in the temp array, for ***ZERO-PADDING***
-        {
-            framebuffer[n] = 0;
-        }
-
-        for (int n = 0; n < framesize; n++)     // Hann window
-        {
-            w[n] = 0.54 - 0.46*Math.cos(2*Math.PI*n/(framesize-1));
-        }
-
-        for (int i = 0; i < sound.length; i = i + noverlap) {
-            for (int j = 0; j < framesize; j++)         // Cut
+            for (int n = 0; n < 2 * framesize; n++)         //zero all elements in the temp array, for ***ZERO-PADDING***
             {
-                framebuffer[i + j] = sound[i + j];
-                framebuffer[i + j] *= w[j];                // Apply Window
+                framebuffer[n] = 0;
             }
-            fft.complexForward(framebuffer);            // FFT and same to the original array (this is a feature of JTransform Library)
 
-            for (int j = 0; j < ncol; j++) {
-                for (int k = 0; k < framesize; k++)       // Retain only half of temp array because FFT has redundant symmetrical conjugate.
+            for (int n = 0; n < framesize; n++)     // Hann window
+            {
+                w[n] = 0.54 - 0.46 * Math.cos(2 * Math.PI * n / (framesize - 1));
+            }
+
+            for (int i = 0; i < sound.length; i = i + noverlap) {
+                for (int j = 0; j < framesize; j++)         // Cut
                 {
-                    S[k][j] = framebuffer[k];       // Save as Real Spectrogram
+                    framebuffer[i + j] = sound[i + j];
+                    framebuffer[i + j] *= w[j];                // Apply Window
+                }
+                fft.complexForward(framebuffer);            // FFT and save to the original array (this is a feature of JTransform Library)
+
+                for (int j = 0; j < ncol; j++) {
+                    for (int k = 0; k < framesize; k++)       // Retain only half of temp array because FFT has redundant symmetrical conjugate.
+                    {
+                        S[k][j] = framebuffer[k];       // Save as Real Spectrogram
+                    }
                 }
             }
+            return S;
         }
-        return S;
-    }
 
-    private double[] readPCM() {
-        double[] result = null;
-        try {
+        public double[] readPCM() {
             File file = new File(mFileName);
-            InputStream in = new FileInputStream(file);
-            int bufferSize = (int) (file.length()/2);
-            size = (int) file.length();
-            result = new double[bufferSize];
-            DataInputStream is = new DataInputStream(in);
-
-            for (int i = 0; i < bufferSize; i++) {
-                result[i] = is.readShort() / 32768.0;
-            }
-        } catch (FileNotFoundException e) {
-            Log.i("File not found", "" + e);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        return result;
-    }
-
-    private void readPCMstream() {
-        try {
-            File file = new File(mFileName);
-            InputStream in = new FileInputStream(file);
-            size = (int) file.length();
-            data = new DataInputStream(in);
-        } catch (FileNotFoundException e) {
-            Log.i("File not found", "" + e);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
-    private class startPlaying extends AsyncTask<Void, Integer, Void> {
-
-        @Override
-        protected Void doInBackground(Void... params) {
-            readPCMstream();
-
-            int maxJitter = AudioTrack.getMinBufferSize(44100, AudioFormat.CHANNEL_OUT_MONO, AudioFormat.ENCODING_PCM_16BIT);
-            mPlay = new AudioTrack(AudioManager.STREAM_MUSIC, 44100, AudioFormat.CHANNEL_OUT_MONO,
-                    AudioFormat.ENCODING_PCM_16BIT, maxJitter, AudioTrack.MODE_STREAM);
-
-            int bytesread = 0;
-            int ret = -1;
-            int count = 512;
-
-            byte[] byteData = new byte[count];
-
-            mPlay.play();
-
-            while (bytesread < size && isCont) {
-
+            InputStream in = null;
+            if (file.isFile()) {
+                long size = file.length();
                 try {
-                    ret = data.read(byteData, 0, count);
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-
-                if (ret != -1) {
-                    mPlay.write(byteData, 0, ret);
-                    bytesread += ret;
-                } else {
-                    break;
+                    in = new FileInputStream(file);
+                    return readStreamAsDoubleArray(in, size);
+                } catch (Exception e) {
                 }
             }
             return null;
         }
 
-        protected void onPostExecute(Void result) {
-            mPlay.stop();
-            stopPlaying();
+        public static double[] readStreamAsDoubleArray(InputStream in, long size)
+                throws IOException {
+            int bufferSize = (int) (size / 2);
+            double[] result = new double[bufferSize];
+            DataInputStream is = new DataInputStream(in);
+            for (int i = 0; i < bufferSize; i++) {
+                result[i] = is.readDouble() / 32768.0;
+            }
+            return result;
         }
-    }
 
-    private void stopPlaying() {
+        public double[] readPCMstream() {
+            File file = new File(mFileName);
+            InputStream in = null;
+            if (file.isFile()) {
+                //long size = file.length();
+                try {
+                    in = new FileInputStream(file);
+                    data = new DataInputStream(in);
+                } catch (Exception e) {
+                }
+            }
+            return null;
+        }
 
-        timer.stop();
-        timer.setText("0:00");
-        PlayButton.setText("Play");
-        startPlay = true;
-        RecButton.setEnabled(true);
-        mPlay.release();
-    }
+        private class startPlaying extends AsyncTask<Void, Integer, Void> {
 
-    private class startRecording extends AsyncTask<Void, Integer, Void>{
+            @Override
+            protected Void doInBackground(Void... params) {
+                readPCMstream();
 
-        @Override
-        protected Void doInBackground(Void... params) {
+                int maxJitter = AudioTrack.getMinBufferSize(44100, AudioFormat.CHANNEL_OUT_MONO, AudioFormat.ENCODING_PCM_16BIT);
+                mPlay = new AudioTrack(AudioManager.STREAM_MUSIC, 44100, AudioFormat.CHANNEL_OUT_MONO,
+                        AudioFormat.ENCODING_PCM_16BIT, maxJitter, AudioTrack.MODE_STREAM);
 
-            isRec = true;
+                int bytesread = 0;
+                int ret = -1;
+                int count = 512;
 
-            min = AudioRecord.getMinBufferSize(44100, AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT);
-            mRec = new AudioRecord(MediaRecorder.AudioSource.MIC, 44100, AudioFormat.CHANNEL_IN_MONO,
-                    AudioFormat.ENCODING_PCM_16BIT, min);
+                byte[] byteData = new byte[count];
 
-            //CreateFile();
+                mPlay.play();
 
-            byte audioData[] = new byte[min];
-            android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_URGENT_AUDIO);
+                while (bytesread < size && isCont) {
+
+                    try {
+                        ret = data.read(byteData, 0, count);
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+
+                    if (ret != -1) {
+                        mPlay.write(byteData, 0, ret);
+                        bytesread += ret;
+                    } else {
+                        break;
+                    }
+                }
+                return null;
+            }
+
+            protected void onPostExecute(Void result) {
+                mPlay.stop();
+                stopPlaying();
+            }
+        }
+
+        private void stopPlaying() {
+
+            timer.stop();
+            timer.setText("0:00");
+            PlayButton.setText("Play");
+            startPlay = true;
+            RecButton.setEnabled(true);
+            mPlay.release();
+        }
+
+        private class startRecording extends AsyncTask<Void, Integer, Void> {
+
+            @Override
+            protected Void doInBackground(Void... params) {
+
+                isRec = true;
+
+                min = AudioRecord.getMinBufferSize(44100, AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT);
+                mRec = new AudioRecord(MediaRecorder.AudioSource.MIC, 44100, AudioFormat.CHANNEL_IN_MONO,
+                        AudioFormat.ENCODING_PCM_16BIT, min);
+
+                //CreateFile();
+
+                byte audioData[] = new byte[min];
+                android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_URGENT_AUDIO);
+
+                try {
+                    os = new BufferedOutputStream(new FileOutputStream(mFileName));
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+
+                mRec.startRecording();
+                while (isRec) {
+                    int status = mRec.read(audioData, 0, audioData.length);
+
+                    if (status == AudioRecord.ERROR_INVALID_OPERATION ||
+                            status == AudioRecord.ERROR_BAD_VALUE) {
+                        //return;
+                    }
+
+                    try {
+                        os.write(audioData, 0, audioData.length);
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                        //return;
+                    }
+                }
+
+                return null;
+            }
+        }
+
+        private void stopRecording() {
+            mRec.stop();
+
+            timer.stop();
+            timer.setText("0:00");
 
             try {
-                os = new BufferedOutputStream(new FileOutputStream(mFileName));
+                os.close();
             } catch (IOException e) {
                 e.printStackTrace();
             }
 
-            mRec.startRecording();
-            while (isRec) {
-                int status = mRec.read(audioData, 0, audioData.length);
-
-                if (status == AudioRecord.ERROR_INVALID_OPERATION ||
-                        status == AudioRecord.ERROR_BAD_VALUE) {
-                    //return;
-                }
-
-                try {
-                    os.write(audioData, 0, audioData.length);
-                } catch (IOException e) {
-                    e.printStackTrace();
-                    //return;
-                }
-            }
-
-            return null;
-        }
-    }
-
-    private void stopRecording() {
-        mRec.stop();
-
-        timer.stop();
-        timer.setText("0:00");
-
-        try {
-            os.close();
-        } catch (IOException e) {
-            e.printStackTrace();
+            mRec.release();
+            mRec = null;
         }
 
-        mRec.release();
-        mRec = null;
-    }
-
-    OnClickListener RecClick = new OnClickListener() {
-        boolean startRec = true;
+        OnClickListener RecClick = new OnClickListener() {
+            boolean startRec = true;
 
             @Override
-            public void onClick(View v){
+            public void onClick(View v) {
 
-                if (startRec){
+                if (startRec) {
                     RecButton.setChecked(true);
                     PlayButton.setEnabled(false);
                     onRecord(startRec);
-                }
-
-                else{
+                } else {
                     RecButton.setChecked(false);
                     PlayButton.setEnabled(true);
                     onRecord(startRec);
@@ -457,72 +476,70 @@ public class MainActivity extends ActionBarActivity {
 
                 startRec = !startRec;
             }
-    };
+        };
 
-    OnClickListener PlayClick = new OnClickListener() {
+        OnClickListener PlayClick = new OnClickListener() {
 
-       @Override
-       public void onClick(View v) {
+            @Override
+            public void onClick(View v) {
 
-           onPlay(startPlay);
+                onPlay(startPlay);
 
-           if (startPlay){
-               PlayButton.setText("Stop");
-               RecButton.setEnabled(false);
-           }
+                if (startPlay) {
+                    PlayButton.setText("Stop");
+                    RecButton.setEnabled(false);
+                } else {
+                    PlayButton.setText("Play");
+                    RecButton.setEnabled(true);
+                }
 
-           else{
-               PlayButton.setText("Play");
-               RecButton.setEnabled(true);
-           }
+                startPlay = !startPlay;
+            }
+        };
 
-           startPlay = !startPlay;
-       }
-   };
+        private void CreateFile() {
 
-    private void CreateFile(){
+            Calendar now = Calendar.getInstance();
 
-        Calendar now = Calendar.getInstance();
+            String ext = Integer.toString(now.get(Calendar.YEAR));
+            ext = ext + "" + Integer.toString(now.get(Calendar.MONTH) + 1);
+            ext = ext + "" + Integer.toString(now.get(Calendar.DATE));
+            ext = ext + "_" + Integer.toString(now.get(Calendar.HOUR));
+            ext = ext + "" + Integer.toString(now.get(Calendar.MINUTE));
 
-        String ext = Integer.toString(now.get(Calendar.YEAR));
-        ext = ext + ""+Integer.toString(now.get(Calendar.MONTH)+1);
-        ext = ext + ""+Integer.toString(now.get(Calendar.DATE));
-        ext = ext + "_"+Integer.toString(now.get(Calendar.HOUR));
-        ext = ext + ""+Integer.toString(now.get(Calendar.MINUTE));
+            mFileName = Environment.getExternalStorageDirectory().getAbsolutePath();
+            mFileName += "/Music/" + ext + ".pcm";
 
-        mFileName = Environment.getExternalStorageDirectory().getAbsolutePath();
-        mFileName += "/Music/"+ext + ".pcm";
+        }
 
+        @Override
+        public void onPause() {
+
+            super.onPause();
+
+            if (mRec != null) {
+                mRec.release();
+                mRec = null;
+            }
+
+            if (mPlay != null) {
+                mPlay.release();
+                mPlay = null;
+            }
+        }
+
+        @Override
+        public void onDestroy() {
+            super.onDestroy();
+
+            if (mRec != null) {
+                mRec.release();
+                mRec = null;
+            }
+
+            if (mPlay != null) {
+                mPlay.release();
+                mPlay = null;
+            }
+        }
     }
-
-    @Override
-    public void onPause(){
-
-        super.onPause();
-
-        if (mRec != null){
-            mRec.release();
-            mRec = null;
-        }
-
-        if (mPlay != null){
-            mPlay.release();
-            mPlay = null;
-        }
-    }
-
-    @Override
-    public void onDestroy(){
-        super.onDestroy();
-
-        if (mRec != null){
-            mRec.release();
-            mRec = null;
-        }
-
-        if (mPlay != null){
-            mPlay.release();
-            mPlay = null;
-        }
-    }
-}
