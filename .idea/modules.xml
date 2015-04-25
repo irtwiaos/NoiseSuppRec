@@ -3,7 +3,9 @@
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/BackgroundNoiseSuppressionRecorder.iml" filepath="$PROJECT_DIR$/BackgroundNoiseSuppressionRecorder.iml" />
+      <module fileurl="file://$PROJECT_DIR$/yourproject/libs/JLargeArrays-1.2/JLargeArrays-1.2.iml" filepath="$PROJECT_DIR$/yourproject/libs/JLargeArrays-1.2/JLargeArrays-1.2.iml" />
       <module fileurl="file://$PROJECT_DIR$/yourproject/libs/JTransforms-3.0/JTransforms-3.0.iml" filepath="$PROJECT_DIR$/yourproject/libs/JTransforms-3.0/JTransforms-3.0.iml" />
+      <module fileurl="file://$PROJECT_DIR$/NoiseSuppRec_2.iml" filepath="$PROJECT_DIR$/NoiseSuppRec_2.iml" />
       <module fileurl="file://$PROJECT_DIR$/app/app.iml" filepath="$PROJECT_DIR$/app/app.iml" />
       <module fileurl="file://$PROJECT_DIR$/yourproject/libs/libs.iml" filepath="$PROJECT_DIR$/yourproject/libs/libs.iml" />
       <module fileurl="file://$PROJECT_DIR$/yourproject/yourproject.iml" filepath="$PROJECT_DIR$/yourproject/yourproject.iml" />

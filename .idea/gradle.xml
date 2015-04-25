@@ -12,6 +12,7 @@
             <option value="$PROJECT_DIR$/app" />
             <option value="$PROJECT_DIR$/yourproject" />
             <option value="$PROJECT_DIR$/yourproject/libs" />
+            <option value="$PROJECT_DIR$/yourproject/libs/JLargeArrays-1.2" />
             <option value="$PROJECT_DIR$/yourproject/libs/JTransforms-3.0" />
           </set>
         </option>

@@ -205,32 +205,9 @@ public class MainActivity extends ActionBarActivity {
         }
     }
 /*
-    private void noiseRed(boolean ResNoise, boolean AddAtt)throws IOException{
-
-            /*basic noise reduction algorithm                       MediaRecorder method -> XXXX
-
-            String mMime = "audio/3gpp";
-            MediaCodec codec = MediaCodec.createDecoderByType(mMime);
-
-            MediaFormat mMediaFormat = new MediaFormat();
-            mMediaFormat = MediaFormat.createAudioFormat(mMime,
-                    mMediaFormat.getInteger(MediaFormat.KEY_SAMPLE_RATE),
-                    mMediaFormat.getInteger(MediaFormat.KEY_CHANNEL_COUNT));
-
-            codec.configure(mMediaFormat, null, null, 0);
-            codec.start();
-
-            ByteBuffer[] inputBuffers = codec.getInputBuffers();
-            ByteBuffer[] outputBuffers = codec.getOutputBuffers();
 
 
-            MediaCodec.BufferInfo buf_info = new MediaCodec.BufferInfo();
-            int outputBufferIndex = codec.dequeueOutputBuffer(buf_info, 0);
-            byte[] pcm = new byte[buf_info.size];
-            outputBuffers[outputBufferIndex].get(pcm, 0, buf_info.size); */
-
-
-/********************** Create Spectrogram **************************/
+    //********************** Create Spectrogram **************************
         // grab the original sound as a double array from the readPCM function
         /*double[] sound = readPCM();
         // get the noise signal-- first (0.4*sample rate) samples of the sound signal
@@ -243,9 +220,9 @@ public class MainActivity extends ActionBarActivity {
         int SizeRow = SSignal.length;
         int SizeColumn = SSignal[0].length;
         double[][] SNoise = spectrogram(noise); // S_N in matlab
-/******************* END of Creating Spectrogram ******************/
-        /* noise reduction algorithm */
-       /* int hopsize = 256; // directly from matlab
+
+        // noise reduction algorithm
+        int hopsize = 256; // directly from matlab
         double[] avgSN = new double[hopsize+1]; // avg_SN
         int ColumnN = SNoise[0].length; // size(S_N, 2), number of colums of S_N
         for (int i = 0; i < avgSN.length; i++){
@@ -275,13 +252,13 @@ public class MainActivity extends ActionBarActivity {
         if(AddAtt){
                 // call additional signal attenuation
         }
-    }
-/*
+    }*/
+
     private double[][] spectrogram(double[] sound){
         int framesize = 512;
         int noverlap = 256;
         double[] w = new double[framesize]; //Hann Window
-        /*double[] sound = new double[4096]; //original sound, just say it has 4096 samples
+        sound = new double[4096]; //original sound, just say it has 4096 samples
         double[] framebuffer = new double [2*framesize];
         int ncol = (int) Math.floor((sound.length-noverlap)/(framesize-noverlap)); // how many columns of Spectrogram
         double[][] S = new double[framesize/2+1][ncol];     //Actual 2D Array holding Spectrogram
@@ -314,7 +291,7 @@ public class MainActivity extends ActionBarActivity {
         }
         return S;
     }
-*/
+
     private double[] readPCM() {
         double[] result = null;
         try {

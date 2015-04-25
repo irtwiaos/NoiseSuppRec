@@ -3,7 +3,7 @@
   <component name="FacetManager">
     <facet type="android-gradle" name="Android-Gradle">
       <configuration>
-        <option name="GRADLE_PROJECT_PATH" value=":yourproject:libs:JTransforms-3.0" />
+        <option name="GRADLE_PROJECT_PATH" value=":yourproject:libs:JLargeArrays-1.2" />
       </configuration>
     </facet>
   </component>
