@@ -583,6 +583,7 @@ import static android.view.View.*;
                 mRec = null;
             }
 
+
             if (mPlay != null) {
                 mPlay.release();
                 mPlay = null;
