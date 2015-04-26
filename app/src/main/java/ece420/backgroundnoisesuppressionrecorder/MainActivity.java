@@ -282,6 +282,9 @@ import static android.view.View.*;
             // inverse FFT
             int frameN =  SizeColumn;
             xr = new double[framesize + (frameN - 1)*hopsize]; //anticipated x length
+            for(int i = 0; i < xr.length; i++){
+                xr[i] = 0;
+            }
             double[] XR = new double[SizeRow*2 + framesize/2-1];
             double[] XR_second = new double [framesize/2-1];
             for (int i = 0; i < hopsize*frameN; i+= hopsize){
