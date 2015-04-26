@@ -72,6 +72,7 @@ import static android.view.View.*;
         private boolean isRec;
         private int min;
         private boolean isCont;
+        private double[] xr;
 
         DataInputStream data = null;
         BufferedOutputStream os = null;
@@ -178,7 +179,7 @@ import static android.view.View.*;
                 boolean NoiseRed = NoiseReduction.isChecked();
                 boolean ResidualNoise = ResNoise.isChecked();
                 boolean AdditionalAttenuation = AdditionalAtt.isChecked();
-/*
+
             if(NoiseRed){
                 try {
                     noiseRed(ResidualNoise, AdditionalAttenuation);
@@ -186,7 +187,7 @@ import static android.view.View.*;
                 catch(IOException ex){
                    ex.printStackTrace();
                 }
-            }   // if switch is on, call basic noise reduction function*/
+            }   // if switch is on, call basic noise reduction function
 
                 //startPlaying();
                 isCont = true;
@@ -214,7 +215,7 @@ import static android.view.View.*;
             // create spectrogram of the whole signal and the noise
             double[][] SSignal_raw = spectrogram(sound); // S in matlab
             int SizeRow = SSignal_raw.length/2;
-            int SizeColumn = SSignal_raw[0].length;
+            int SizeColumn = SSignal_raw[0].length; //size(S, 2)
             double[][] SNoise_raw = spectrogram(noise); // S_N in matlab
             int ColumnN = SNoise_raw[0].length; // size(S_N, 2), number of colums of S_N
             int RowN = SNoise_raw.length/2;
@@ -234,6 +235,7 @@ import static android.view.View.*;
 
             // noise reduction algorithm
             int hopsize = 256; // directly from matlab
+            int framesize = 512;
             double[] avgSN = new double[hopsize + 1]; // avg_SN
             for (int i = 0; i < avgSN.length; i++) {
                 for (int j = 0; j < ColumnN; j++) {
@@ -261,6 +263,15 @@ import static android.view.View.*;
                 }
             }
 
+            // add phase to S_new
+            double[][] SNew_raw = new double[SizeRow*2][SizeColumn];
+            for (int i = 0; i < SizeColumn; i++){
+                for (int j = 0; j < SizeRow; j++){
+                    SNew_raw[i][j*2] = SSignal_raw[i][j*2]*(SNew[i][j]/SSignal[i][j]);
+                    SNew_raw[i][j*2+1] = SSignal_raw[i][j*2+1]*(SNew[i][j]/SSignal[i][j]);
+                }
+            }
+
             if (ResNoise) {
                 // call residual noise reduction
             }
@@ -268,7 +279,41 @@ import static android.view.View.*;
                 // call additional signal attenuation
             }
 
-
+            // inverse FFT
+            int frameN =  SizeColumn;
+            xr = new double[framesize + (frameN - 1)*hopsize]; //anticipated x length
+            double[] XR = new double[SizeRow*2 + framesize/2-1];
+            double[] XR_second = new double [framesize/2-1];
+            for (int i = 0; i < hopsize*frameN; i+= hopsize){
+                for (int j = 0; j < SizeRow*2; j++){
+                    XR[j] = SNew_raw[j][1+i/hopsize];
+                }
+                for (int k = 0; k < framesize/2 - 1; k--){
+                    if((framesize/2 - 1 - k) % 2 == 0){
+                        XR_second[k] = XR[framesize/2 - 1 - k];
+                    }
+                    else if ((framesize/2 - 1 - k) % 2 == 1){
+                        XR_second[k] = - XR[framesize/2 - 1 - k];
+                    }
+                }
+                for (int l = 0; l < framesize/2 - 1; l++){
+                    XR[l + SizeRow*2] = XR_second[l];
+                }
+                DoubleFFT_1D fft = new DoubleFFT_1D(2 * framesize);
+                fft.complexInverse(XR, true);
+                double[] XR_real = new double[XR.length/2];
+                for (int n = 0; n < XR.length/2; n++){
+                    XR_real[n] = XR[2*n];
+                }
+                double[] w = new double[framesize]; //Hann Window
+                for (int n = 0; n < framesize; n++)     // Hann window
+                {
+                    w[n] = 0.54 - 0.46 * Math.cos(2 * Math.PI * n / (framesize - 1));
+                }
+                for (int m = i; m < i + framesize; m++){
+                    xr[m] = xr[m] + XR[m - i] * w[m - i];
+                }
+            }
         }
 
         private double[][] spectrogram(double[] sound) {
@@ -338,7 +383,7 @@ import static android.view.View.*;
             File file = new File(mFileName);
             InputStream in = null;
             if (file.isFile()) {
-                //long size = file.length();
+                size = (int)file.length();
                 try {
                     in = new FileInputStream(file);
                     data = new DataInputStream(in);
