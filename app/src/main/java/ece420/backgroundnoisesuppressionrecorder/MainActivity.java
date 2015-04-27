@@ -33,6 +33,7 @@ import android.widget.ListView;
 import java.io.BufferedOutputStream;
 import java.io.ByteArrayInputStream;
 import java.io.DataInputStream;
+import java.io.DataOutputStream;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
@@ -124,6 +125,8 @@ import static android.view.View.*;
             AdditionalAtt = (CheckBox) findViewById(R.id.checkBox3);
 
             ProcessButton = (Button) findViewById(R.id.button2);
+            ProcessButton.setOnClickListener(ProClick);
+
             //FileList
             lv = (ListView) findViewById(R.id.listView);
             myList = new ArrayList<String>();
@@ -148,7 +151,6 @@ import static android.view.View.*;
 
         }
 
-
         @Override
         public boolean onCreateOptionsMenu(Menu menu) {
             // Inflate the menu; this adds items to the action bar if it is present.
@@ -171,7 +173,6 @@ import static android.view.View.*;
             return super.onOptionsItemSelected(item);
         }
 
-
         private void onRecord(boolean start) {
             if (start) {
                 CreateFile();
@@ -188,26 +189,6 @@ import static android.view.View.*;
 
         private void onPlay(boolean start) {
             if (start) {
-
-            /*get switch and checkbox options
-
-            if (switch is true){
-                NoiseRed(check box shit);
-            }
-            */
-                boolean NoiseRed = NoiseReduction.isChecked();
-                boolean ResidualNoise = ResNoise.isChecked();
-                boolean AdditionalAttenuation = AdditionalAtt.isChecked();
-
-            if(NoiseRed){
-                try {
-                    noiseRed(ResidualNoise, AdditionalAttenuation);
-                }
-                catch(IOException ex){
-                   ex.printStackTrace();
-                }
-            }   // if switch is on, call basic noise reduction function
-
                 //startPlaying();
                 isCont = true;
                 startPlaying isPlay = new startPlaying();
@@ -221,6 +202,40 @@ import static android.view.View.*;
             }
         }
 
+        private void onProcess(){
+
+            /*get switch and checkbox options
+
+            if (switch is true){
+                NoiseRed(check box shit);
+            }
+            */
+            boolean NoiseRed = NoiseReduction.isChecked();
+            boolean ResidualNoise = ResNoise.isChecked();
+            boolean AdditionalAttenuation = AdditionalAtt.isChecked();
+
+            if(NoiseRed){
+                try {
+                    noiseRed(ResidualNoise, AdditionalAttenuation);
+                }
+                catch(IOException ex){
+                    ex.printStackTrace();
+                }
+            }   // if switch is on, call basic noise reduction function
+
+            /* Store Suppressed Audio File
+            //xr = readPCM();
+            changeFilename();
+            try{
+                WritetoFile();
+            }catch(IOException e){
+                e.printStackTrace();
+            }*/
+
+            RecButton.setEnabled(true);
+            PlayButton.setEnabled(true);
+            ProcessButton.setEnabled(true);
+        }
 
         private void noiseRed(boolean ResNoise, boolean AddAtt) throws IOException {
             //********************** Create Spectrogram **************************
@@ -474,7 +489,7 @@ import static android.view.View.*;
             double[] result = new double[bufferSize];
             DataInputStream is = new DataInputStream(in);
             for (int i = 0; i < bufferSize; i++) {
-                result[i] = is.readDouble() / 32768.0;
+                result[i] = (double)is.readShort() / 32768.0;
             }
             return result;
         }
@@ -542,6 +557,7 @@ import static android.view.View.*;
             PlayButton.setText("Play");
             startPlay = true;
             RecButton.setEnabled(true);
+            ProcessButton.setEnabled(true);
             mPlay.release();
         }
 
@@ -604,7 +620,7 @@ import static android.view.View.*;
             mRec = null;
         }
 
-          OnClickListener RecClick = new OnClickListener() {
+        OnClickListener RecClick = new OnClickListener() {
             boolean startRec = true;
 
             @Override
@@ -613,10 +629,12 @@ import static android.view.View.*;
                 if (startRec) {
                     RecButton.setChecked(true);
                     PlayButton.setEnabled(false);
+                    ProcessButton.setEnabled(false);
                     onRecord(startRec);
                 } else {
                     RecButton.setChecked(false);
                     PlayButton.setEnabled(true);
+                    ProcessButton.setEnabled(true);
                     onRecord(startRec);
                 }
 
@@ -634,14 +652,55 @@ import static android.view.View.*;
                 if (startPlay) {
                     PlayButton.setText("Stop");
                     RecButton.setEnabled(false);
+                    ProcessButton.setEnabled(false);
                 } else {
                     PlayButton.setText("Play");
                     RecButton.setEnabled(true);
+                    ProcessButton.setEnabled(true);
                 }
 
                 startPlay = !startPlay;
             }
         };
+
+        OnClickListener ProClick = new OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                ProcessButton.setEnabled(false);
+                RecButton.setEnabled(false);
+                PlayButton.setEnabled(false);
+                onProcess();
+            }
+        };
+
+        private void changeFilename (){
+
+            String temp[] = mFileName.split(".pcm");
+            mFileName = temp[0];
+            mFileName += "_SUPP.pcm";
+        }
+
+        private void WritetoFile()throws IOException{
+
+            os=new BufferedOutputStream(new FileOutputStream(mFileName));
+
+            short temp;
+            byte [] mBuffer = new byte[2];
+
+            for (int i = 0; i<xr.length; i++) {
+                temp = (short)(xr[i]*32768);
+                mBuffer[0]=(byte)(temp>>8);
+                mBuffer[1]=(byte)temp;
+
+                try {
+                    os.write(mBuffer, 0, mBuffer.length);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+
+            os.close();
+        }
 
         private void CreateFile() {
 
@@ -655,9 +714,7 @@ import static android.view.View.*;
 
             mFileName = Environment.getExternalStorageDirectory().getAbsolutePath();
             mFileName += "/Music/" + ext + ".pcm";
-
         }
-
 
         @Override
         public void onPause() {
