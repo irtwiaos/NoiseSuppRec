@@ -90,6 +90,7 @@ import static android.view.View.*;
         private double[][] SNew;
         private double[][] SNew_raw;
 
+
         DataInputStream data = null;
         BufferedOutputStream os = null;
 
