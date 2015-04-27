@@ -236,34 +236,34 @@ import static android.view.View.*;
             RowN = SNoise_raw.length/2;
 
             SNoise = new double [RowN][ColumnN];
-            for (int i = 0; i < ColumnN; i++){
-                for (int j = 0; j < RowN; j++){
-                    SNoise[i][j] = Math.sqrt(SNoise_raw[i][2*j]*SNoise_raw[i][2*j] + SNoise_raw[i][2*j+1]*SNoise_raw[i][2*j+1]);
+            for (int i = 0; i < RowN; i++){
+                for (int j = 0; j < ColumnN; j++){
+                    SNoise[i][j] = Math.sqrt(SNoise_raw[i*2][j]*SNoise_raw[i*2][j] + SNoise_raw[i*2+1][j]*SNoise_raw[i*2+1][j]);
                 }
             }
             SSignal = new double [SizeRow][SizeColumn];
-            for (int i = 0; i < SizeColumn; i++){
-                for (int j = 0; j < SizeRow; j++){
-                    SSignal[i][j] = Math.sqrt(SSignal_raw[i][2*j]*SSignal_raw[i][2*j] + SSignal_raw[i][2*j+1]*SSignal_raw[i][2*j+1]);
+            for (int i = 0; i < SizeRow; i++){
+                for (int j = 0; j < SizeColumn; j++){
+                    SSignal[i][j] = Math.sqrt(SSignal_raw[i*2][j]*SSignal_raw[i*2][j] + SSignal_raw[i*2+1][j]*SSignal_raw[i*2+1][j]);
                 }
             }
 
             // noise reduction algorithm
             avgSN = new double[hopsize + 1]; // avg_SN
             for (int i = 0; i < avgSN.length; i++) {
-                for (int j = 0; j < RowN; j++) {
+                for (int j = 0; j < ColumnN; j++) {
                     avgSN[i] = avgSN[i] + Math.abs(SNoise[i][j]); // summation, as as matlab
                 }
             }
             for (int i = 0; i < avgSN.length; i++) {
-                avgSN[i] = avgSN[i] / RowN; // division to get avg, same as matlab
+                avgSN[i] = avgSN[i] / ColumnN; // division to get avg, same as matlab
             }
 
             // 3-frame averaging not implemented
         /* bias removal and half-wave rectifying, suppose no average and no attenuation*/
             SNew = new double[SizeRow][SizeColumn]; // S_new
             for (int i = 0; i < hopsize + 1; i++) {
-                for (int j = 0; j < SizeRow; j++) {
+                for (int j = 0; j < SizeColumn; j++) {
                     SNew[i][j] = Math.abs(SSignal[i][j]) - 3 * avgSN[i];
                     if (SNew[i][j] < 0) {
                         SNew[i][j] = 0;
@@ -271,12 +271,10 @@ import static android.view.View.*;
                 }
             }
             for (int i = 0; i < hopsize + 1; i++) {
-                for (int j = 0; j < SizeRow; j++) {
+                for (int j = 0; j < SizeColumn; j++) {
                     SNew[i][j] = SNew[i][j];
                 }
             }
-
-
 
             if (ResNoise) {
                 // call residual noise reduction
@@ -285,18 +283,17 @@ import static android.view.View.*;
 
             // add phase to S_new
             SNew_raw = new double[SizeRow*2][SizeColumn];
-            for (int i = 0; i < SizeColumn; i++){
-                for (int j = 0; j < SizeRow; j++){
-                    SNew_raw[i][j*2] = SSignal_raw[i][j*2]*(SNew[i][j]/SSignal[i][j]);
-                    SNew_raw[i][j*2+1] = SSignal_raw[i][j*2+1]*(SNew[i][j]/SSignal[i][j]);
+            for (int i = 0; i < SizeRow; i++){
+                for (int j = 0; j < SizeColumn; j++){
+                    SNew_raw[i*2][j] = SSignal_raw[i*2][j]*(SNew[i][j]/SSignal[i][j]);
+                    SNew_raw[i*2+1][j] = SSignal_raw[i*2+1][j]*(SNew[i][j]/SSignal[i][j]);
                 }
             }
 
             if (AddAtt) {
                 // call additional signal attenuation
+                AddAtt();
             }
-
-
 
             // inverse FFT
             int frameN =  SizeColumn;
@@ -340,16 +337,16 @@ import static android.view.View.*;
 
         private void ResNoise(){
             double[][] NR_raw = new double [RowN*2][ColumnN];
-            for (int i = 0; i < ColumnN; i++){
-                for (int j = 0; j < RowN; j++){
-                    NR_raw[i][2*j] = SNew_raw[i][2*j] - avgSN[j] * SNew_raw[i][2*j]/SNew[i][j];
-                    NR_raw[i][2*j+1] = SNew_raw[i][2*j+1] - avgSN[j] * SNew_raw[i][2*j+1]/SNew[i][j];
+            for (int i = 0; i < RowN; i++){
+                for (int j = 0; j < ColumnN; j++){
+                    NR_raw[i*2][j] = SNew_raw[i*2][j] - avgSN[j] * SNew_raw[i*2][j]/SNew[i][j];
+                    NR_raw[i*2+1][j] = SNew_raw[i*2+1][j] - avgSN[j] * SNew_raw[i*2+1][j]/SNew[i][j];
                 }
             }
             double [][] NR = new double [RowN][ColumnN];
-            for (int i = 0; i < ColumnN; i++){
-                for (int j = 0; j < RowN; j++){
-                    NR[i][j] = Math.sqrt(NR_raw[i][2*j]*NR_raw[i][2*j] + NR_raw[i][2*j+1]*NR_raw[i][2*j+1]);
+            for (int i = 0; i < RowN; i++){
+                for (int j = 0; j < ColumnN; j++){
+                    NR[i][j] = Math.sqrt(NR_raw[i*2][j]*NR_raw[i*2][j] + NR_raw[i*2+1][j]*NR_raw[i*2+1][j]);
                 }
             }
             double[] maxNR_abs = new double[avgSN.length];
@@ -357,19 +354,36 @@ import static android.view.View.*;
                 maxNR_abs[i] = maxInArray(NR[i]);
             }
 
-            //int last = RowN - 1;
-            //for (int i = 0; i < ColumnN; i++){
-            //    SNew[i][0] = minThree(SNew[i][0], SNew[i][1], SNew[i][2]);
-            //    SNew[i][last] = minThree(SNew[i][last], SNew[i][last - 1], SNew[i][last - 2]);
-            // }
+            int last = ColumnN - 1;
+            for (int i = 0; i < RowN; i++){
+                SNew[i][0] = minThree(SNew[i][0], SNew[i][1], SNew[i][2]);
+                SNew[i][last] = minThree(SNew[i][last], SNew[i][last - 1], SNew[i][last - 2]);
+             }
 
-            //for (int j = 1; j < RowN - 1; j++){
-            //    for (int i = 0; i < ColumnN; i++){
-            //        if(SNew[i][j] < maxNR_abs[i]){
-            //            SNew[i][j] = minThree(SNew[i][j-1], SNew[i][j], SNew[i][j+1]);
-            //       }
-            //   }
-            //}
+            for (int j = 1; j < ColumnN - 1; j++){
+                for (int i = 0; i < RowN; i++){
+                    if(SNew[i][j] < maxNR_abs[i]){
+                        SNew[i][j] = minThree(SNew[i][j-1], SNew[i][j], SNew[i][j+1]);
+                   }
+               }
+            }
+        }
+
+        private void AddAtt(){
+            double[] TT = new double[SizeColumn];
+            for (int j = 0; j < SizeColumn; j++){
+                for (int i = 0; i < SizeRow; i++){
+                    double sum = 0;
+                    for(int k = 0; k < SizeRow; k++){
+                        sum = sum + SNew[k][j]/avgSN[k];
+                    }
+                    TT[j] = 20*Math.log10(sum/SizeRow);
+                    if(TT[j] < -35){
+                        SNew_raw[2*i][j] = 0.0316 * SSignal_raw[2*i][j];
+                        SNew_raw[2*i+1][j] = 0.0316 * SSignal_raw[2*i+1][j];
+                    }
+                }
+            }
         }
 
         private double maxInArray(double[] array){
@@ -586,7 +600,7 @@ import static android.view.View.*;
             mRec = null;
         }
 
-        OnClickListener RecClick = new OnClickListener() {
+          OnClickListener RecClick = new OnClickListener() {
             boolean startRec = true;
 
             @Override
