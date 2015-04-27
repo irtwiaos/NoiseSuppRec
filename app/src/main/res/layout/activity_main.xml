@@ -57,7 +57,7 @@
         android:id="@+id/button"
         android:layout_below="@+id/checkBox3"
         android:layout_alignStart="@+id/checkBox3"
-        android:layout_marginTop="20px" />
+        android:layout_marginTop="110px" />
 
 
 
@@ -89,6 +89,16 @@
         android:layout_alignEnd="@+id/checkBox3"
         android:layout_toRightOf="@+id/toggle"
         android:layout_toEndOf="@+id/toggle" />
+
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Process"
+        android:textSize="60px"
+        android:id="@+id/button2"
+        android:layout_below="@+id/checkBox3"
+        android:layout_alignLeft="@+id/checkBox3"
+        android:layout_alignStart="@+id/checkBox3" />
 
 
 </RelativeLayout>

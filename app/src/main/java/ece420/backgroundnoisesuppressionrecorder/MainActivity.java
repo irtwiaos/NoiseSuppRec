@@ -62,6 +62,7 @@ import static android.view.View.*;
 
         ToggleButton RecButton;
         Button PlayButton;
+        Button ProcessButton;
         Chronometer timer;
 
         Switch NoiseReduction;
@@ -120,6 +121,8 @@ import static android.view.View.*;
             ResNoise = (CheckBox) findViewById(R.id.checkBox2);
 
             AdditionalAtt = (CheckBox) findViewById(R.id.checkBox3);
+
+            ProcessButton = (Button) findViewById(R.id.button2);
             //FileList
             lv = (ListView) findViewById(R.id.listView);
             myList = new ArrayList<String>();
