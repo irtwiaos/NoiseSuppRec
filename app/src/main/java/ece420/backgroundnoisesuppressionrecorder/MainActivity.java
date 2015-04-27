@@ -1,5 +1,6 @@
 package ece420.backgroundnoisesuppressionrecorder;
 
+import android.inputmethodservice.Keyboard;
 import android.media.AudioFormat;
 import android.media.AudioManager;
 import android.media.AudioRecord;
@@ -73,6 +74,20 @@ import static android.view.View.*;
         private int min;
         private boolean isCont;
         private double[] xr;
+
+        private double[][] SSignal_raw;
+        private int SizeRow;
+        private int SizeColumn;
+        private double[][] SNoise_raw;
+        private int ColumnN;
+        private int RowN;
+        private double[][] SNoise;
+        private double[][] SSignal;
+        private int hopsize = 256;
+        private int framesize = 512;
+        private double[] avgSN;
+        private double[][] SNew;
+        private double[][] SNew_raw;
 
         DataInputStream data = null;
         BufferedOutputStream os = null;
@@ -213,20 +228,20 @@ import static android.view.View.*;
                 noise[i] = sound[i];
             }
             // create spectrogram of the whole signal and the noise
-            double[][] SSignal_raw = spectrogram(sound); // S in matlab
-            int SizeRow = SSignal_raw.length/2;
-            int SizeColumn = SSignal_raw[0].length; //size(S, 2)
-            double[][] SNoise_raw = spectrogram(noise); // S_N in matlab
-            int ColumnN = SNoise_raw[0].length; // size(S_N, 2), number of colums of S_N
-            int RowN = SNoise_raw.length/2;
+            SSignal_raw = spectrogram(sound); // S in matlab
+            SizeRow = SSignal_raw.length/2;
+            SizeColumn = SSignal_raw[0].length; //size(S, 2)
+            SNoise_raw = spectrogram(noise); // S_N in matlab
+            ColumnN = SNoise_raw[0].length; // size(S_N, 2), number of colums of S_N
+            RowN = SNoise_raw.length/2;
 
-            double[][] SNoise = new double [RowN][ColumnN];
+            SNoise = new double [RowN][ColumnN];
             for (int i = 0; i < ColumnN; i++){
                 for (int j = 0; j < RowN; j++){
                     SNoise[i][j] = Math.sqrt(SNoise_raw[i][2*j]*SNoise_raw[i][2*j] + SNoise_raw[i][2*j+1]*SNoise_raw[i][2*j+1]);
                 }
             }
-            double[][] SSignal = new double [SizeRow][SizeColumn];
+            SSignal = new double [SizeRow][SizeColumn];
             for (int i = 0; i < SizeColumn; i++){
                 for (int j = 0; j < SizeRow; j++){
                     SSignal[i][j] = Math.sqrt(SSignal_raw[i][2*j]*SSignal_raw[i][2*j] + SSignal_raw[i][2*j+1]*SSignal_raw[i][2*j+1]);
@@ -234,23 +249,21 @@ import static android.view.View.*;
             }
 
             // noise reduction algorithm
-            int hopsize = 256; // directly from matlab
-            int framesize = 512;
-            double[] avgSN = new double[hopsize + 1]; // avg_SN
+            avgSN = new double[hopsize + 1]; // avg_SN
             for (int i = 0; i < avgSN.length; i++) {
-                for (int j = 0; j < ColumnN; j++) {
+                for (int j = 0; j < RowN; j++) {
                     avgSN[i] = avgSN[i] + Math.abs(SNoise[i][j]); // summation, as as matlab
                 }
             }
             for (int i = 0; i < avgSN.length; i++) {
-                avgSN[i] = avgSN[i] / ColumnN; // division to get avg, same as matlab
+                avgSN[i] = avgSN[i] / RowN; // division to get avg, same as matlab
             }
 
             // 3-frame averaging not implemented
         /* bias removal and half-wave rectifying, suppose no average and no attenuation*/
-            double[][] SNew = new double[SizeRow][SizeColumn]; // S_new
+            SNew = new double[SizeRow][SizeColumn]; // S_new
             for (int i = 0; i < hopsize + 1; i++) {
-                for (int j = 0; j < SizeColumn; j++) {
+                for (int j = 0; j < SizeRow; j++) {
                     SNew[i][j] = Math.abs(SSignal[i][j]) - 3 * avgSN[i];
                     if (SNew[i][j] < 0) {
                         SNew[i][j] = 0;
@@ -258,13 +271,20 @@ import static android.view.View.*;
                 }
             }
             for (int i = 0; i < hopsize + 1; i++) {
-                for (int j = 0; j < SizeColumn; j++) {
+                for (int j = 0; j < SizeRow; j++) {
                     SNew[i][j] = SNew[i][j];
                 }
             }
 
+
+
+            if (ResNoise) {
+                // call residual noise reduction
+                ResNoise();
+            }
+
             // add phase to S_new
-            double[][] SNew_raw = new double[SizeRow*2][SizeColumn];
+            SNew_raw = new double[SizeRow*2][SizeColumn];
             for (int i = 0; i < SizeColumn; i++){
                 for (int j = 0; j < SizeRow; j++){
                     SNew_raw[i][j*2] = SSignal_raw[i][j*2]*(SNew[i][j]/SSignal[i][j]);
@@ -272,12 +292,11 @@ import static android.view.View.*;
                 }
             }
 
-            if (ResNoise) {
-                // call residual noise reduction
-            }
             if (AddAtt) {
                 // call additional signal attenuation
             }
+
+
 
             // inverse FFT
             int frameN =  SizeColumn;
@@ -317,6 +336,66 @@ import static android.view.View.*;
                     xr[m] = xr[m] + XR[m - i] * w[m - i];
                 }
             }
+        }
+
+        private void ResNoise(){
+            double[][] NR_raw = new double [RowN*2][ColumnN];
+            for (int i = 0; i < ColumnN; i++){
+                for (int j = 0; j < RowN; j++){
+                    NR_raw[i][2*j] = SNew_raw[i][2*j] - avgSN[j] * SNew_raw[i][2*j]/SNew[i][j];
+                    NR_raw[i][2*j+1] = SNew_raw[i][2*j+1] - avgSN[j] * SNew_raw[i][2*j+1]/SNew[i][j];
+                }
+            }
+            double [][] NR = new double [RowN][ColumnN];
+            for (int i = 0; i < ColumnN; i++){
+                for (int j = 0; j < RowN; j++){
+                    NR[i][j] = Math.sqrt(NR_raw[i][2*j]*NR_raw[i][2*j] + NR_raw[i][2*j+1]*NR_raw[i][2*j+1]);
+                }
+            }
+            double[] maxNR_abs = new double[avgSN.length];
+            for (int i = 0; i < NR.length; i++){
+                maxNR_abs[i] = maxInArray(NR[i]);
+            }
+
+            //int last = RowN - 1;
+            //for (int i = 0; i < ColumnN; i++){
+            //    SNew[i][0] = minThree(SNew[i][0], SNew[i][1], SNew[i][2]);
+            //    SNew[i][last] = minThree(SNew[i][last], SNew[i][last - 1], SNew[i][last - 2]);
+            // }
+
+            //for (int j = 1; j < RowN - 1; j++){
+            //    for (int i = 0; i < ColumnN; i++){
+            //        if(SNew[i][j] < maxNR_abs[i]){
+            //            SNew[i][j] = minThree(SNew[i][j-1], SNew[i][j], SNew[i][j+1]);
+            //       }
+            //   }
+            //}
+        }
+
+        private double maxInArray(double[] array){
+            double value = 0.0;
+            if(array != null){
+                int size = array.length;
+                value = array[0];
+                for (int i = 0; i < size; i++){
+                    if (array[i] > value){
+                        value = array[i];
+                    }
+                }
+            }
+            return  value;
+
+        }
+
+        private double minThree(double first, double second, double third){
+            double result = first;
+            if (second > result){
+                result = second;
+            }
+            if(third > result){
+                result = third;
+            }
+            return result;
         }
 
         private double[][] spectrogram(double[] sound){
