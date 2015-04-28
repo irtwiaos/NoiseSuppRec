@@ -359,14 +359,14 @@ import static android.view.View.*;
             // inverse FFT
             int frameN =  SizeColumn;
             xr = new double[framesize + (frameN - 1)*hopsize]; //anticipated x length
-            for(int i = 0; i < xr.length; i++){
+    /*        for(int i = 0; i < xr.length; i++){
                 xr[i] = 0;
-            }
+            }       */
             double[] XR = new double[SizeRow*2 + framesize/2-1];
             double[] XR_second = new double [framesize/2-1];
             for (int i = 0; i < hopsize*frameN; i+= hopsize){
                 for (int j = 0; j < SizeRow*2; j++){
-                    XR[j] = SNew_raw[j][1+i/hopsize];
+                    XR[j] = SNew_raw[j][0+i/hopsize];
                 }
                 for (int k = 0; k < framesize/2 - 1; k--){
                     if((framesize/2 - 1 - k) % 2 == 0){
@@ -496,16 +496,21 @@ import static android.view.View.*;
             }
 
             for (int i = 0; i < sound.length; i = i + noverlap) {
-                    for (int j = 0; j < 2 * framesize-2; j = j + 2) {   //framebuffer has 4*framesize, but only the first 2*framesize has information
-                        if (i+framesize <= sound.length) {
-                            framebuffer[i + j] = sound[i + j];
-                            framebuffer[i + j] *= w[j];              // Apply Window
-                        }
-                    }
-                    fft.complexForward(framebuffer, 0);            // FFT and save to the original array (this is a feature of JTransform Library)
 
-                    for (int k = 0; k < 2 * framesize; k++) {       // Retain only half of temp array because FFT has redundant symmetrical conjugate.
-                        S[k][col_index] = framebuffer[k];       // Save as Output Spectrogram
+                    for (int j = 0; j < 2 * framesize-2; j = j + 2) {   //framebuffer has 4*framesize, but only the first 2*framesize has information
+                        if (i+(2*framesize-2) <= sound.length) {
+                            framebuffer[j] = sound[i + j];
+                            framebuffer[j] *= w[j];              // Apply Window
+                        }
+                        else
+                            break;
+                    }
+                    if (i+(2*framesize-2) <= sound.length) {
+                        fft.realForward(framebuffer, 0);            // FFT and save to the original array (this is a feature of JTransform Library)
+
+                        for (int k = 0; k < 2 * framesize; k++) {       // Retain only half of temp array because FFT has redundant symmetrical conjugate.
+                            S[k][col_index] = framebuffer[k];       // Save as Output Spectrogram
+                        }
                     }
                 col_index++;
             }
