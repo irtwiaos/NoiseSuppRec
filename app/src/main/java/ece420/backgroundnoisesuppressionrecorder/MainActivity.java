@@ -70,7 +70,7 @@ import static android.view.View.*;
         Switch NoiseReduction;
         CheckBox ResNoise;
         CheckBox AdditionalAtt;
-        ProgressBar Process;
+        ProgressBar ProcessBar;
 
         private int size;
         private boolean startPlay;
@@ -132,7 +132,8 @@ import static android.view.View.*;
             ProcessButton = (Button) findViewById(R.id.button2);
             ProcessButton.setOnClickListener(ProClick);
 
-            Process = (ProgressBar) findViewById(R.id.progressBar);
+            ProcessBar = (ProgressBar) findViewById(R.id.progressBar);
+            ProcessBar.setVisibility(View.INVISIBLE);
             //FileList
             lv = (ListView) findViewById(R.id.listView);
             myList = new ArrayList<String>();
@@ -221,8 +222,11 @@ import static android.view.View.*;
             AdditionalAttenuation = AdditionalAtt.isChecked();
 
             if(NoiseRed) {
+                /*
                 startProcess isProcess = new startProcess();
                 isProcess.execute();
+                */
+                startProcess();
             }
 
             else {
@@ -232,34 +236,48 @@ import static android.view.View.*;
             }
         }
 
-        private class startProcess extends AsyncTask<Void, Integer, Void> {
+        //private class startProcess extends AsyncTask<Void, Integer, Void> {
+        private void startProcess() {
+          /*  @Override
+            protected void onPreExecute() {
+                ProcessBar.setVisibility(View.VISIBLE);
+                super.onPreExecute();
+            }
+*/
+  /*          @Override
+            protected void onProgressUpdate(Integer... values) {
+                super.onProgressUpdate(values);
 
-            @Override
-            protected Void doInBackground(Void... params) {
-  /*              try {
+            }
+*/
+  //          @Override
+    //        protected Void doInBackground(Void... params) {
+
+            try {
                     noiseRed(ResidualNoise, AdditionalAttenuation);
                 }
                 catch(IOException ex){
                     ex.printStackTrace();
                 }
-*/
+
                 // Store Suppressed Audio File
-                xr = readPCM();
+                //xr = readPCM();
                 changeFilename();
                 try{
                     WritetoFile();
                 }catch(IOException e){
                     e.printStackTrace();
                 }
-                return null;
+      //          return null;
             }
 
-            protected void onPostExecute(Void result) {
+           /* protected void onPostExecute(Void result) {
+                ProcessBar.setVisibility(View.INVISIBLE);
                 RecButton.setEnabled(true);
                 PlayButton.setEnabled(true);
                 ProcessButton.setEnabled(true);
             }
-        }
+        }*/
 
         private void noiseRed(boolean ResNoise, boolean AddAtt) throws IOException {
             //********************** Create Spectrogram **************************
