@@ -502,7 +502,7 @@ import static android.view.View.*;
                             framebuffer[i + j] *= w[j];              // Apply Window
                         }
                     }
-                    fft.complexForward(framebuffer);            // FFT and save to the original array (this is a feature of JTransform Library)
+                    fft.complexForward(framebuffer, 0);            // FFT and save to the original array (this is a feature of JTransform Library)
 
                     for (int k = 0; k < 2 * framesize; k++) {       // Retain only half of temp array because FFT has redundant symmetrical conjugate.
                         S[k][col_index] = framebuffer[k];       // Save as Output Spectrogram

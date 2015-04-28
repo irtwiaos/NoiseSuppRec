@@ -26,7 +26,6 @@ android {
 dependencies {
     compile fileTree(dir: 'libs', include: ['*.jar'])
     compile 'com.android.support:appcompat-v7:22.0.0'
-    compile files('libs/JTransforms-3.0.jar')
-    compile files('libs/JLargeArrays-1.2.jar')
+    compile files('libs/JTransforms-3.0.jar', 'libs/JLargeArrays-1.2.jar', 'libs/JTransforms-3.0-javadoc.jar', 'libs/JTransforms-3.0-sources.jar')
 
 }

@@ -1,1 +1,5 @@
-include ':app', ':yourproject:libs:JTransforms-3.0', 'yourproject:libs:JLargeArrays-1.2'
+include ':app'
+include ':libs:JTransforms-3.0'
+include ':libs:JLargeArrays-1.2'
+include ':libs:JTransforms-3.0-javadoc'
+include ':libs:JTransforms-3.0-sources'
