@@ -133,7 +133,6 @@ import static android.view.View.*;
             ProcessButton.setOnClickListener(ProClick);
 
             Process = (ProgressBar) findViewById(R.id.progressBar);
-
             //FileList
             lv = (ListView) findViewById(R.id.listView);
             myList = new ArrayList<String>();
