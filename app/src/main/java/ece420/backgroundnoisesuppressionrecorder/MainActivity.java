@@ -370,7 +370,7 @@ import static android.view.View.*;
                 double[] w = new double[framesize]; //Hann Window
                 for (int n = 0; n < framesize; n++)     // Hann window
                 {
-                    w[n] = 0.54 - 0.46 * Math.cos(2 * Math.PI * n / (framesize - 1));
+                    w[n] = 0.5 - 0.5 * Math.cos(2 * Math.PI * n / (framesize - 1));
                 }
                 for (int m = i; m < i + framesize; m++){
                     xr[m] = xr[m] + XR[m - i] * w[m - i];
@@ -458,37 +458,38 @@ import static android.view.View.*;
         private double[][] spectrogram(double[] sound){
             int framesize = 512;
             int noverlap = 256;
-            double[] w = new double[framesize]; //Hann Window
-            //sound = new double[4096]; //original sound, just say it has 4096 samples
-            double[] framebuffer = new double [2*framesize];
+            double[] w = new double[2*framesize]; //Hann Window
+            double[] framebuffer = new double [4*framesize];
             int ncol = (int) Math.floor((sound.length-noverlap)/(framesize-noverlap)); // how many columns of Spectrogram
-            double[][] S = new double[(framesize/2+1)*2][ncol];     //Actual 2D Array holding Spectrogram
+            int col_index = 0;
+            double[][] S = new double[2*framesize][ncol];     //Actual 2D Array holding Spectrogram
             DoubleFFT_1D fft = new DoubleFFT_1D(4*framesize); //framebuffer = 2*framesize; fftsize = 2*framebuffer
 
-            for (int n=0;n<2*framesize;n++)         //zero all elements in the temp array, for ***ZERO-PADDING***
-            {
+            for (int n=0;n<2*framesize;n++) {        //Initializing temp array and Hann window (make them all zeros)
+                framebuffer[n] = 0;
+                w[n] = 0;
+            }
+            for (int n=2*framesize; n<4*framesize; n++) {       // Zero-padding temp array
                 framebuffer[n] = 0;
             }
 
-            for (int n = 0; n < framesize; n++)     // Hann window
-            {
-                w[n] = 0.54 - 0.46*Math.cos(2*Math.PI*n/(framesize-1));
+            for (int n = 0; n < 2*framesize; n=n+2) {    // Hann window, which are all real numbers (complex parts are 0)
+                w[n] = 0.5 - 0.5*Math.cos(2*Math.PI*n/(framesize-1));
             }
 
             for (int i = 0; i < sound.length; i = i + noverlap) {
-                for (int j = 0; j < framesize; j++)         // Cut in half
-                {
-                    framebuffer[i + j] = sound[i + j];
-                    framebuffer[i + j] *= w[j];                // Apply Window
-                }
-                fft.complexForward(framebuffer);            // FFT and save to the original array (this is a feature of JTransform Library)
-
-                for (int j = 0; j < ncol; j++) {
-                    for (int k = 0; k < framesize; k++)       // Retain only half of temp array because FFT has redundant symmetrical conjugate.
-                    {
-                        S[k][j] = framebuffer[k];       // Save as Output Spectrogram
+                    for (int j = 0; j < 2 * framesize; j = j + 2) {   //framebuffer has 4*framesize, but only the first 2*framesize has information
+                        if (i+framesize >= sound.length) {
+                            framebuffer[i + j] = sound[i + j];
+                            framebuffer[i + j] *= w[j];              // Apply Window
+                        }
                     }
-                }
+                    fft.complexForward(framebuffer);            // FFT and save to the original array (this is a feature of JTransform Library)
+
+                    for (int k = 0; k < 2 * framesize; k++) {       // Retain only half of temp array because FFT has redundant symmetrical conjugate.
+                        S[k][col_index] = framebuffer[k];       // Save as Output Spectrogram
+                    }
+                col_index++;
             }
             return S;
         }
