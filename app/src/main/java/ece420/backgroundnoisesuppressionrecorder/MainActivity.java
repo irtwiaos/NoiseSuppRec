@@ -491,13 +491,13 @@ import static android.view.View.*;
                 framebuffer[n] = 0;
             }
 
-            for (int n = 0; n < 2*framesize; n=n+2) {    // Hann window, which are all real numbers (complex parts are 0)
+            for (int n = 0; n < 2*framesize-2; n=n+2) {    // Hann window, which are all real numbers (complex parts are 0)
                 w[n] = 0.5 - 0.5*Math.cos(2*Math.PI*n/(framesize-1));
             }
 
             for (int i = 0; i < sound.length; i = i + noverlap) {
-                    for (int j = 0; j < 2 * framesize; j = j + 2) {   //framebuffer has 4*framesize, but only the first 2*framesize has information
-                        if (i+framesize >= sound.length) {
+                    for (int j = 0; j < 2 * framesize-2; j = j + 2) {   //framebuffer has 4*framesize, but only the first 2*framesize has information
+                        if (i+framesize <= sound.length) {
                             framebuffer[i + j] = sound[i + j];
                             framebuffer[i + j] *= w[j];              // Apply Window
                         }
