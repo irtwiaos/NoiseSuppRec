@@ -19,6 +19,7 @@ import android.media.MediaRecorder;
 import android.media.MediaPlayer;
 import android.widget.Button;
 import android.widget.Chronometer;
+import android.widget.ProgressBar;
 import android.widget.ToggleButton;
 import android.widget.Switch;
 import android.widget.CheckBox;
@@ -69,6 +70,7 @@ import static android.view.View.*;
         Switch NoiseReduction;
         CheckBox ResNoise;
         CheckBox AdditionalAtt;
+        ProgressBar Process;
 
         private int size;
         private boolean startPlay;
@@ -129,6 +131,8 @@ import static android.view.View.*;
 
             ProcessButton = (Button) findViewById(R.id.button2);
             ProcessButton.setOnClickListener(ProClick);
+
+            Process = (ProgressBar) findViewById(R.id.progressBar);
 
             //FileList
             lv = (ListView) findViewById(R.id.listView);
