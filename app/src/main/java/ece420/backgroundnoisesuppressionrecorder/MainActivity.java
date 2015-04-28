@@ -368,7 +368,7 @@ import static android.view.View.*;
                 for (int j = 0; j < SizeRow*2; j++){
                     XR[j] = SNew_raw[j][0+i/hopsize];
                 }
-                for (int k = 0; k < framesize/2 - 1; k--){
+                for (int k = framesize/2 - 2; k >= 0 ; k--){
                     if((framesize/2 - 1 - k) % 2 == 0){
                         XR_second[k] = XR[framesize/2 - 1 - k];
                     }

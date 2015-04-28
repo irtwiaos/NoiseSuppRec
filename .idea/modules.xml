@@ -6,7 +6,7 @@
       <module fileurl="file://$PROJECT_DIR$/yourproject/libs/JTransforms-3.0/JTransforms-3.0.iml" filepath="$PROJECT_DIR$/yourproject/libs/JTransforms-3.0/JTransforms-3.0.iml" />
       <module fileurl="file://$PROJECT_DIR$/libs/JTransforms-3.0-javadoc/JTransforms-3.0-javadoc.iml" filepath="$PROJECT_DIR$/libs/JTransforms-3.0-javadoc/JTransforms-3.0-javadoc.iml" />
       <module fileurl="file://$PROJECT_DIR$/libs/JTransforms-3.0-sources/JTransforms-3.0-sources.iml" filepath="$PROJECT_DIR$/libs/JTransforms-3.0-sources/JTransforms-3.0-sources.iml" />
-      <module fileurl="file://$PROJECT_DIR$/NoiseSuppRec_2.iml" filepath="$PROJECT_DIR$/NoiseSuppRec_2.iml" />
+      <module fileurl="file://$PROJECT_DIR$/NoiseSuppRec.iml" filepath="$PROJECT_DIR$/NoiseSuppRec.iml" />
       <module fileurl="file://$PROJECT_DIR$/app/app.iml" filepath="$PROJECT_DIR$/app/app.iml" />
       <module fileurl="file://$PROJECT_DIR$/yourproject/libs/libs.iml" filepath="$PROJECT_DIR$/yourproject/libs/libs.iml" />
     </modules>
