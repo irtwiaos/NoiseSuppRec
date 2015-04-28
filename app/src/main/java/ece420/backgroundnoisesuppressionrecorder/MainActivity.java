@@ -101,6 +101,9 @@ import static android.view.View.*;
         private List<String> myList;
         File file;
 
+        boolean ResidualNoise;
+        boolean AdditionalAttenuation;
+
         @Override
         protected void onCreate(Bundle savedInstanceState) {
             super.onCreate(savedInstanceState);
@@ -211,30 +214,48 @@ import static android.view.View.*;
             }
             */
             boolean NoiseRed = NoiseReduction.isChecked();
-            boolean ResidualNoise = ResNoise.isChecked();
-            boolean AdditionalAttenuation = AdditionalAtt.isChecked();
+            ResidualNoise = ResNoise.isChecked();
+            AdditionalAttenuation = AdditionalAtt.isChecked();
 
-            if(NoiseRed){
-                try {
+            if(NoiseRed) {
+                startProcess isProcess = new startProcess();
+                isProcess.execute();
+            }
+
+            else {
+                RecButton.setEnabled(true);
+                PlayButton.setEnabled(true);
+                ProcessButton.setEnabled(true);
+            }
+        }
+
+        private class startProcess extends AsyncTask<Void, Integer, Void> {
+
+            @Override
+            protected Void doInBackground(Void... params) {
+  /*              try {
                     noiseRed(ResidualNoise, AdditionalAttenuation);
                 }
                 catch(IOException ex){
                     ex.printStackTrace();
                 }
-            }   // if switch is on, call basic noise reduction function
+*/
+                // Store Suppressed Audio File
+                xr = readPCM();
+                changeFilename();
+                try{
+                    WritetoFile();
+                }catch(IOException e){
+                    e.printStackTrace();
+                }
+                return null;
+            }
 
-            /* Store Suppressed Audio File
-            //xr = readPCM();
-            changeFilename();
-            try{
-                WritetoFile();
-            }catch(IOException e){
-                e.printStackTrace();
-            }*/
-
-            RecButton.setEnabled(true);
-            PlayButton.setEnabled(true);
-            ProcessButton.setEnabled(true);
+            protected void onPostExecute(Void result) {
+                RecButton.setEnabled(true);
+                PlayButton.setEnabled(true);
+                ProcessButton.setEnabled(true);
+            }
         }
 
         private void noiseRed(boolean ResNoise, boolean AddAtt) throws IOException {
