@@ -490,7 +490,7 @@ import static android.view.View.*;
                     }
                     if (i+(framesize) <= noverlap*ncol) {
                         fft.realForward(framebuffer, 0);            // FFT and save to the original array (this is a feature of JTransform Library)
-                     //   framebuffer = DFT_firsthalf(framebuffer);
+                    // //   framebuffer = DFT_firsthalf(framebuffer);
                         for (int k = 0; k < 2 * framesize; k++) {       // Retain only half of temp array because FFT has redundant symmetrical conjugate.
                             S[k][col_index] = framebuffer[k];       // Save as Output Spectrogram
                         }
