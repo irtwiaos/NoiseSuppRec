@@ -222,11 +222,11 @@ import static android.view.View.*;
             AdditionalAttenuation = AdditionalAtt.isChecked();
 
             if(NoiseRed) {
-                /*
+
                 startProcess isProcess = new startProcess();
                 isProcess.execute();
-                */
-                startProcess();
+
+     //            startProcess();
             }
 
             else {
@@ -236,22 +236,22 @@ import static android.view.View.*;
             }
         }
 
-        //private class startProcess extends AsyncTask<Void, Integer, Void> {
-        private void startProcess() {
-          /*  @Override
+        private class startProcess extends AsyncTask<Void, Integer, Void> {
+ //       private void startProcess() {
+            @Override
             protected void onPreExecute() {
                 ProcessBar.setVisibility(View.VISIBLE);
                 super.onPreExecute();
             }
-*/
-  /*          @Override
+
+            @Override
             protected void onProgressUpdate(Integer... values) {
                 super.onProgressUpdate(values);
 
             }
-*/
-  //          @Override
-    //        protected Void doInBackground(Void... params) {
+
+            @Override
+            protected Void doInBackground(Void... params) {
 
             try {
                     noiseRed(ResidualNoise, AdditionalAttenuation);
@@ -268,16 +268,16 @@ import static android.view.View.*;
                 }catch(IOException e){
                     e.printStackTrace();
                 }
-      //          return null;
+                return null;
             }
 
-           /* protected void onPostExecute(Void result) {
+            protected void onPostExecute(Void result) {
                 ProcessBar.setVisibility(View.INVISIBLE);
                 RecButton.setEnabled(true);
                 PlayButton.setEnabled(true);
                 ProcessButton.setEnabled(true);
             }
-        }*/
+        }
 
         private void noiseRed(boolean ResNoise, boolean AddAtt) throws IOException {
             //********************** Create Spectrogram **************************
@@ -293,7 +293,7 @@ import static android.view.View.*;
             SizeRow = SSignal_raw.length/2;
             SizeColumn = SSignal_raw[0].length; //size(S, 2)
             SNoise_raw = spectrogram(noise); // S_N in matlab
-            ColumnN = SNoise_raw[0].length; // size(S_N, 2), number of colums of S_N
+            ColumnN = SNoise_raw[0].length; // size(S_N, 2), number of columns of S_N
             RowN = SNoise_raw.length/2;
 
             SNoise = new double [RowN][ColumnN];
@@ -309,11 +309,12 @@ import static android.view.View.*;
                 }
             }
 
-            // noise reduction algorithm
-            avgSN = new double[hopsize + 1]; // avg_SN
+            // basic noise reduction algorithm
+            avgSN = new double[framesize]; // avg_SN, default to be 0
+
             for (int i = 0; i < avgSN.length; i++) {
                 for (int j = 0; j < ColumnN; j++) {
-                    avgSN[i] = avgSN[i] + Math.abs(SNoise[i][j]); // summation, as as matlab
+                    avgSN[i] = avgSN[i] + SNoise[i][j]; // summation, as as matlab
                 }
             }
             for (int i = 0; i < avgSN.length; i++) {
@@ -323,17 +324,12 @@ import static android.view.View.*;
             // 3-frame averaging not implemented
         /* bias removal and half-wave rectifying, suppose no average and no attenuation*/
             SNew = new double[SizeRow][SizeColumn]; // S_new
-            for (int i = 0; i < hopsize + 1; i++) {
+            for (int i = 0; i < SizeRow; i++) {
                 for (int j = 0; j < SizeColumn; j++) {
-                    SNew[i][j] = Math.abs(SSignal[i][j]) - 3 * avgSN[i];
+                    SNew[i][j] = SSignal[i][j] - 3*avgSN[i];
                     if (SNew[i][j] < 0) {
                         SNew[i][j] = 0;
                     }
-                }
-            }
-            for (int i = 0; i < hopsize + 1; i++) {
-                for (int j = 0; j < SizeColumn; j++) {
-                    SNew[i][j] = SNew[i][j];
                 }
             }
 
@@ -346,8 +342,8 @@ import static android.view.View.*;
             SNew_raw = new double[SizeRow*2][SizeColumn];
             for (int i = 0; i < SizeRow; i++){
                 for (int j = 0; j < SizeColumn; j++){
-                    SNew_raw[i*2][j] = SSignal_raw[i*2][j]*(SNew[i][j]/SSignal[i][j]);
-                    SNew_raw[i*2+1][j] = SSignal_raw[i*2+1][j]*(SNew[i][j]/SSignal[i][j]);
+                    SNew_raw[2*i][j] = SSignal_raw[2*i][j]*(SNew[i][j]/SSignal[i][j]);      //Real
+                    SNew_raw[2*i+1][j] = SSignal_raw[2*i+1][j]*(SNew[i][j]/SSignal[i][j]);  //Imag
                 }
             }
 
@@ -357,41 +353,33 @@ import static android.view.View.*;
             }
 
             // inverse FFT
-            int frameN =  SizeColumn;
-            xr = new double[framesize + (frameN - 1)*hopsize]; //anticipated x length
-    /*        for(int i = 0; i < xr.length; i++){
-                xr[i] = 0;
-            }       */
-            double[] XR = new double[SizeRow*2 + framesize/2-1];
-            double[] XR_second = new double [framesize/2-1];
-            for (int i = 0; i < hopsize*frameN; i+= hopsize){
-                for (int j = 0; j < SizeRow*2; j++){
-                    XR[j] = SNew_raw[j][0+i/hopsize];
+            xr = new double[framesize + (SizeColumn - 1)*hopsize]; //anticipated x length
+            double[] XR = new double[SizeRow*2]; // 2x normal size
+            double[] a_chunk_of_sound = new double[framesize];
+            DoubleFFT_1D fft = new DoubleFFT_1D(SizeRow*2);
+
+            for (int i = 0; i < hopsize*SizeColumn; i+= hopsize){
+                for (int j = 0; j < SizeRow*2; j++){    //SizeRow is half of original frequency rows
+                    XR[j] = SNew_raw[j][i/hopsize];   //SNew_raw has phase
                 }
-                for (int k = 0; k < framesize/2 - 1; k--){
-                    if((framesize/2 - 1 - k) % 2 == 0){
-                        XR_second[k] = XR[framesize/2 - 1 - k];
+   /*           for (int k = SizeRow*2; k < SizeRow*4-1; k++){      //Add conjugate half after original XR
+                    if(k % 2 == 0){
+                        XR[k] = XR[SizeRow*4-1-k];      // a sample's real part
                     }
-                    else if ((framesize/2 - 1 - k) % 2 == 1){
-                        XR_second[k] = - XR[framesize/2 - 1 - k];
+                    else {
+                        XR[k] = - XR[SizeRow*4-1-k];    // a sample's imaginary part --- CONJUGATE!
                     }
-                }
-                for (int l = 0; l < framesize/2 - 1; l++){
-                    XR[l + SizeRow*2] = XR_second[l];
-                }
-                DoubleFFT_1D fft = new DoubleFFT_1D(2 * framesize);
-                fft.complexInverse(XR, true);
-                double[] XR_real = new double[XR.length/2];
-                for (int n = 0; n < XR.length/2; n++){
-                    XR_real[n] = XR[2*n];
-                }
-                double[] w = new double[framesize]; //Hann Window
-                for (int n = 0; n < framesize; n++)     // Hann window
-                {
-                    w[n] = 0.5 - 0.5 * Math.cos(2 * Math.PI * n / (framesize - 1));
-                }
+                }      */
+
+                fft.realInverse(XR, true);
+
+                for (int n = 0; n < framesize; n++) {   // Hann window
+                    a_chunk_of_sound[n] = XR[n]*(0.5 - 0.5 * Math.cos(2 * Math.PI * n / (framesize - 1)));
+                }   // only use first half and real numbers of XR, because the rest are all 0 (zero-padded before)
+
                 for (int m = i; m < i + framesize; m++){
-                    xr[m] = xr[m] + XR[m - i] * w[m - i];
+                    if (m < hopsize*SizeColumn)
+                    xr[m] += a_chunk_of_sound[m-i];
                 }
             }
         }
@@ -476,38 +464,33 @@ import static android.view.View.*;
         private double[][] spectrogram(double[] sound){
             int framesize = 512;
             int noverlap = 256;
-            double[] w = new double[2*framesize]; //Hann Window
-            double[] framebuffer = new double [4*framesize];
+            double[] w = new double[framesize]; //Hann Window
+            double[] framebuffer = new double [2*framesize]; //need zero-padding, so 2x original size
             int ncol = (int) Math.floor((sound.length-noverlap)/(framesize-noverlap)); // how many columns of Spectrogram
             int col_index = 0;
             double[][] S = new double[2*framesize][ncol];     //Actual 2D Array holding Spectrogram
-            DoubleFFT_1D fft = new DoubleFFT_1D(4*framesize); //framebuffer = 2*framesize; fftsize = 2*framebuffer
+            DoubleFFT_1D fft = new DoubleFFT_1D(2*framesize);
 
-            for (int n=0;n<2*framesize;n++) {        //Initializing temp array and Hann window (make them all zeros)
-                framebuffer[n] = 0;
-                w[n] = 0;
-            }
-            for (int n=2*framesize; n<4*framesize; n++) {       // Zero-padding temp array
-                framebuffer[n] = 0;
-            }
-
-            for (int n = 0; n < 2*framesize-2; n=n+2) {    // Hann window, which are all real numbers (complex parts are 0)
+            for (int n = 0; n < framesize; n++) {    // Hann window, which are all real numbers
                 w[n] = 0.5 - 0.5*Math.cos(2*Math.PI*n/(framesize-1));
             }
 
-            for (int i = 0; i < sound.length; i = i + noverlap) {
+            for (int i = 0; i < noverlap*ncol; i+=noverlap) {
 
-                    for (int j = 0; j < 2 * framesize-2; j = j + 2) {   //framebuffer has 4*framesize, but only the first 2*framesize has information
-                        if (i+(2*framesize-2) <= sound.length) {
+                for (int n = framesize; n < 2*framesize; n++) {
+                    framebuffer[n] = 0;     //initialize framebuffer and zero-padding
+                }
+                    for (int j = 0; j < framesize; j++) {
+                        if (i+(framesize) <= noverlap*ncol) {
                             framebuffer[j] = sound[i + j];
                             framebuffer[j] *= w[j];              // Apply Window
                         }
                         else
                             break;
                     }
-                    if (i+(2*framesize-2) <= sound.length) {
+                    if (i+(framesize) <= noverlap*ncol) {
                         fft.realForward(framebuffer, 0);            // FFT and save to the original array (this is a feature of JTransform Library)
-
+                     //   framebuffer = DFT_firsthalf(framebuffer);
                         for (int k = 0; k < 2 * framesize; k++) {       // Retain only half of temp array because FFT has redundant symmetrical conjugate.
                             S[k][col_index] = framebuffer[k];       // Save as Output Spectrogram
                         }
@@ -763,6 +746,31 @@ import static android.view.View.*;
             mFileName = Environment.getExternalStorageDirectory().getAbsolutePath();
             mFileName += "/Music/" + ext + ".pcm";
         }
+
+        private double[] DFT_firsthalf(double[] audio) {
+            int n = audio.length;
+            double[] output = new double[n];
+            double[] outreal = new double[n];
+            double[] outimag = new double[n];
+            double sumreal, sumimag;
+            for (int k = 0; k < n; k++) {  // For each output element
+                sumreal = 0;
+                sumimag = 0;
+                for (int t = 0; t < n; t++) {  // For each input element
+                    double angle = 2 * Math.PI * t * k / n;
+                    sumreal +=  audio[t] * Math.cos(angle);
+                    sumimag += -audio[t] * Math.sin(angle);
+                }
+                outreal[k] = sumreal;
+                outimag[k] = sumimag;
+            }
+            for (int i = 0; i < n/2; i++) {
+                output[2*i] = outreal[i];
+                output[2*i+1] = outimag[i+1];
+            }
+            return output;
+        }
+
 
         @Override
         public void onPause() {
