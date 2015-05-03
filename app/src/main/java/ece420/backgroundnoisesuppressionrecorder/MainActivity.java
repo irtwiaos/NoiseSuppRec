@@ -209,7 +209,7 @@ public class MainActivity extends ActionBarActivity {
         }
     }
 
-    private void onProcess(){
+    private void onProcess() {
 
             /*get switch and checkbox options
 
@@ -221,23 +221,22 @@ public class MainActivity extends ActionBarActivity {
         ResidualNoise = ResNoise.isChecked();
         AdditionalAttenuation = AdditionalAtt.isChecked();
 
-        if(NoiseRed) {
-
+        if (NoiseRed) {
+            mFileName = Environment.getExternalStorageDirectory().getAbsolutePath()+"/Music/201552_723.pcm";
             startProcess isProcess = new startProcess();
             isProcess.execute();
 
-            //            startProcess();
-        }
 
-        else {
+            //startProcess();
+        } else {
             RecButton.setEnabled(true);
             PlayButton.setEnabled(true);
             ProcessButton.setEnabled(true);
         }
     }
 
-    private class startProcess extends AsyncTask<Void, Integer, Void> {
-        //       private void startProcess() {
+     private class startProcess extends AsyncTask<Void, Integer, Void> {
+    //private void startProcess() {
         @Override
         protected void onPreExecute() {
             ProcessBar.setVisibility(View.VISIBLE);
@@ -253,23 +252,23 @@ public class MainActivity extends ActionBarActivity {
         @Override
         protected Void doInBackground(Void... params) {
 
-            try {
-                noiseRed(ResidualNoise, AdditionalAttenuation);
-            }
-            catch(IOException ex){
-                ex.printStackTrace();
-            }
-
-            // Store Suppressed Audio File
-            //xr = readPCM();
-            changeFilename();
-            try{
-                WritetoFile();
-            }catch(IOException e){
-                e.printStackTrace();
-            }
-            return null;
+        try {
+            noiseRed(ResidualNoise, AdditionalAttenuation);
+        } catch (IOException ex) {
+            ex.printStackTrace();
         }
+
+        // Store Suppressed Audio File
+        //xr = readPCM();
+        changeFilename();
+        try {
+            WritetoFile();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+                  return null;
+    }
+
 
         protected void onPostExecute(Void result) {
             ProcessBar.setVisibility(View.INVISIBLE);
@@ -278,6 +277,20 @@ public class MainActivity extends ActionBarActivity {
             ProcessButton.setEnabled(true);
         }
     }
+
+private double [] testFFT(double[] sound){
+
+    //double[]ret=new double[2*sound.length];
+    DoubleFFT_1D fft = new DoubleFFT_1D((sound.length));
+
+    fft.realForward(sound, 0);
+
+    //for (int k = 0; k < 2 * sound.length; k++) {       // Retain only half of temp array because FFT has redundant symmetrical conjugate.
+      //  ret[k] = sound[k];       // Save as Output Spectrogram
+   // }
+
+    return sound;
+}
 
     private void noiseRed(boolean ResNoise, boolean AddAtt) throws IOException {
         //********************** Create Spectrogram **************************
@@ -289,7 +302,8 @@ public class MainActivity extends ActionBarActivity {
             noise[i] = sound[i];
         }
         // create spectrogram of the whole signal and the noise
-        SSignal_raw = spectrogram(sound); // S in matlab
+        //SSignal_raw = spectrogram(sound); // S in matlab
+        double[] raw = testFFT(sound);
         SizeRow = SSignal_raw.length/2;
         SizeColumn = SSignal_raw[0].length; //size(S, 2)
         SNoise_raw = spectrogram(noise); // S_N in matlab
@@ -454,12 +468,12 @@ public class MainActivity extends ActionBarActivity {
 
     }
 
-    private double minThree(double first, double second, double third){
+    private double minThree(double first, double second, double third) {
         double result = first;
-        if (second > result){
+        if (second > result) {
             result = second;
         }
-        if(third > result){
+        if (third > result) {
             result = third;
         }
         return result;
@@ -484,14 +498,16 @@ public class MainActivity extends ActionBarActivity {
             for (int n = framesize; n < 2*framesize; n++) {
                 framebuffer[n] = 0;     //initialize framebuffer and zero-padding
             }
+
             for (int j = 0; j < framesize; j++) {
                 if (i+(framesize) <= noverlap*ncol) {
                     framebuffer[j] = sound[i + j];
-                    framebuffer[j] *= w[j];              // Apply Window
+                    //framebuffer[j] *= w[j];              // Apply Window
                 }
                 else
                     break;
             }
+
             if (i+(framesize) <= noverlap*ncol) {
                 fft.realForward(framebuffer, 0);            // FFT and save to the original array (this is a feature of JTransform Library)
                 // //   framebuffer = DFT_firsthalf(framebuffer);
@@ -774,7 +790,6 @@ public class MainActivity extends ActionBarActivity {
         }
         return output;
     }
-
 
     @Override
     public void onPause() {
