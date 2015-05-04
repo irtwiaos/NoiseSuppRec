@@ -78,6 +78,7 @@ public class MainActivity extends ActionBarActivity {
     private int min;
     private boolean isCont;
     private double[] xr;
+    private double[] XR;
 
     private double[][] SSignal_raw;
     private int SizeRow;
@@ -91,7 +92,7 @@ public class MainActivity extends ActionBarActivity {
     private int framesize = 512;
     private double[] avgSN;
     private double[][] SNew;
-    private double[][] SNew_raw;
+    private double[][] SNew_p;
 
 
     DataInputStream data = null;
@@ -197,14 +198,6 @@ public class MainActivity extends ActionBarActivity {
     private void onPlay(boolean start) {
         if (start) {
             //startPlaying();
-            boolean NoiseRed = NoiseReduction.isChecked();
-            if(NoiseRed==true){
-                mFileName = Environment.getExternalStorageDirectory().getAbsolutePath()+"/Music/201552_723_SUPP.pcm";
-            }
-            else {
-                mFileName = Environment.getExternalStorageDirectory().getAbsolutePath() + "/Music/201552_723.pcm";
-            }
-
             isCont = true;
             startPlaying isPlay = new startPlaying();
             timer.setBase(SystemClock.elapsedRealtime());
@@ -230,7 +223,7 @@ public class MainActivity extends ActionBarActivity {
         AdditionalAttenuation = AdditionalAtt.isChecked();
 
         if (NoiseRed) {
-            mFileName = Environment.getExternalStorageDirectory().getAbsolutePath()+"/Music/201552_723.pcm";
+            //          mFileName = Environment.getExternalStorageDirectory().getAbsolutePath()+"/Music/201552_723.pcm";
             startProcess isProcess = new startProcess();
             isProcess.execute();
 
@@ -243,8 +236,8 @@ public class MainActivity extends ActionBarActivity {
         }
     }
 
-     private class startProcess extends AsyncTask<Void, Integer, Void> {
-    //private void startProcess() {
+    private class startProcess extends AsyncTask<Void, Integer, Void> {
+        //private void startProcess() {
         @Override
         protected void onPreExecute() {
             ProcessBar.setVisibility(View.VISIBLE);
@@ -260,22 +253,22 @@ public class MainActivity extends ActionBarActivity {
         @Override
         protected Void doInBackground(Void... params) {
 
-        try {
-            noiseRed(ResidualNoise, AdditionalAttenuation);
-        } catch (IOException ex) {
-            ex.printStackTrace();
-        }
+            try {
+                noiseRed(ResidualNoise, AdditionalAttenuation);
+            } catch (IOException ex) {
+                ex.printStackTrace();
+            }
 
-        // Store Suppressed Audio File
-        //xr = readPCM();
-        changeFilename();
-        try {
-            WritetoFile();
-        } catch (IOException e) {
-            e.printStackTrace();
+            // Store Suppressed Audio File
+            //xr = readPCM();
+            changeFilename();
+            try {
+                WritetoFile();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            return null;
         }
-                  return null;
-    }
 
 
         protected void onPostExecute(Void result) {
@@ -286,19 +279,6 @@ public class MainActivity extends ActionBarActivity {
         }
     }
 
-private double [] testFFT(double[] sound){
-
-    //double[]ret=new double[2*sound.length];
-    DoubleFFT_1D fft = new DoubleFFT_1D((sound.length));
-
-    fft.realForward(sound, 0);
-
-    //for (int k = 0; k < 2 * sound.length; k++) {       // Retain only half of temp array because FFT has redundant symmetrical conjugate.
-      //  ret[k] = sound[k];       // Save as Output Spectrogram
-   // }
-
-    return sound;
-}
 
     private void noiseRed(boolean ResNoise, boolean AddAtt) throws IOException {
         //********************** Create Spectrogram **************************
@@ -306,25 +286,44 @@ private double [] testFFT(double[] sound){
         double[] sound = readPCM();
         // get the noise signal-- first (0.4*sample rate) samples of the sound signal
         double[] noise = new double[17640];
+
+
+        // create spectrogram of the whole signal and the noise
+
+/*        double[] testsignal = new double[44100];
+        for (int i = 0; i < 10000; i++) {
+            testsignal[i] = 0.1;
+        }
+        for (int i = 10000; i < 20000; i++) {
+            testsignal[i] = 0.2;
+        }
+        for (int i = 20000; i < 30000; i++) {
+            testsignal[i] = 0.3;
+        }
+        for (int i = 30000; i < 40000; i++) {
+            testsignal[i] = 0.4;
+        }
+        for (int i = 40000; i < 44100; i++) {
+            testsignal[i] = 0.5;
+        }
+ */
         for (int i = 0; i < noise.length; i++) {
             noise[i] = sound[i];
         }
-        // create spectrogram of the whole signal and the noise
-        SSignal_raw = spectrogram(sound); // S in matlab
-        //double[] raw = testFFT(sound);
+        SSignal_raw = spectrogram(sound);
         SizeRow = SSignal_raw.length/2;
         SizeColumn = SSignal_raw[0].length; //size(S, 2)
         SNoise_raw = spectrogram(noise); // S_N in matlab
         ColumnN = SNoise_raw[0].length; // size(S_N, 2), number of columns of S_N
         RowN = SNoise_raw.length/2;
 
-        SNoise = new double [RowN][ColumnN];
+        SNoise = new double [RowN][ColumnN];    //Noise spectrogram AMPLITUDE
         for (int i = 0; i < RowN; i++){
             for (int j = 0; j < ColumnN; j++){
                 SNoise[i][j] = Math.sqrt(SNoise_raw[i*2][j]*SNoise_raw[i*2][j] + SNoise_raw[i*2+1][j]*SNoise_raw[i*2+1][j]);
             }
         }
-        SSignal = new double [SizeRow][SizeColumn];
+        SSignal = new double [SizeRow][SizeColumn]; //Signal spectrogram AMPLITUDE
         for (int i = 0; i < SizeRow; i++){
             for (int j = 0; j < SizeColumn; j++){
                 SSignal[i][j] = Math.sqrt(SSignal_raw[i*2][j]*SSignal_raw[i*2][j] + SSignal_raw[i*2+1][j]*SSignal_raw[i*2+1][j]);
@@ -332,19 +331,19 @@ private double [] testFFT(double[] sound){
         }
 
         // basic noise reduction algorithm
-        avgSN = new double[framesize]; // avg_SN, default to be 0
+        avgSN = new double[RowN]; // avg_SN, default to be 0
 
         for (int i = 0; i < avgSN.length; i++) {
-            for (int j = 0; j < ColumnN; j++) {
+            for (int j = 0; j < ColumnN-1; j++) {
                 avgSN[i] = avgSN[i] + SNoise[i][j]; // summation, as as matlab
             }
         }
         for (int i = 0; i < avgSN.length; i++) {
-            avgSN[i] = avgSN[i] / ColumnN; // division to get avg, same as matlab
+            avgSN[i] = avgSN[i] / (ColumnN-1); // division to get avg, same as matlab
         }
 
         // 3-frame averaging not implemented
-        /* bias removal and half-wave rectifying, suppose no average and no attenuation*/
+        // bias removal and half-wave rectifying, suppose no average and no attenuation
         SNew = new double[SizeRow][SizeColumn]; // S_new
         for (int i = 0; i < SizeRow; i++) {
             for (int j = 0; j < SizeColumn; j++) {
@@ -361,11 +360,11 @@ private double [] testFFT(double[] sound){
         }
 
         // add phase to S_new
-        SNew_raw = new double[SizeRow*2][SizeColumn];
+        SNew_p = new double[SizeRow*2][SizeColumn];
         for (int i = 0; i < SizeRow; i++){
             for (int j = 0; j < SizeColumn; j++){
-                SNew_raw[2*i][j] = SSignal_raw[2*i][j]*(SNew[i][j]/SSignal[i][j]);      //Real
-                SNew_raw[2*i+1][j] = SSignal_raw[2*i+1][j]*(SNew[i][j]/SSignal[i][j]);  //Imag
+                SNew_p[2*i][j] = SSignal_raw[2*i][j]*SNew[i][j]/SSignal[i][j];      //Real
+                SNew_p[2*i+1][j] = SSignal_raw[2*i+1][j]*SNew[i][j]/SSignal[i][j];  //Imag
             }
         }
 
@@ -376,46 +375,49 @@ private double [] testFFT(double[] sound){
 
         // inverse FFT
         xr = new double[framesize + (SizeColumn - 1)*hopsize]; //anticipated x length
-        double[] XR = new double[SizeRow*2]; // 2x normal size
+        XR = new double[SizeRow*2*2];
         double[] a_chunk_of_sound = new double[framesize];
         DoubleFFT_1D fft = new DoubleFFT_1D(SizeRow*2);
-
         for (int i = 0; i < hopsize*SizeColumn; i+= hopsize){
-            for (int j = 0; j < SizeRow*2; j++){    //SizeRow is half of original frequency rows
-                XR[j] = SNew_raw[j][i/hopsize];   //SNew_raw has phase
+            for (int j = 0; j < XR.length; j++) {
+                XR[j] = 0;
             }
-   /*           for (int k = SizeRow*2; k < SizeRow*4-1; k++){      //Add conjugate half after original XR
-                    if(k % 2 == 0){
-                        XR[k] = XR[SizeRow*4-1-k];      // a sample's real part
+            for (int j = 0; j < SizeRow*2; j++){    //SizeRow is half of original frequency rows
+                XR[j] = SNew_p[j][i/hopsize];   //SNew_raw has phase
+            }
+            XR[SizeRow*2] = 0; //->Real
+            XR[SizeRow*2] = 0; //->Imag, There are by definition
 
-                for (int k = framesize/2 - 2; k >= 0 ; k--){
-                    if((framesize/2 - 1 - k) % 2 == 0){
-                        XR_second[k] = XR[framesize/2 - 1 - k];
-                    }
-                    else {
-                        XR[k] = - XR[SizeRow*4-1-k];    // a sample's imaginary part --- CONJUGATE!
-                    }
-                }      */
+            for (int k = SizeRow*2+2; k < SizeRow*4-1; k++){      //Add conjugate half after original XR
+                if(k % 2 == 0) {
+                    XR[k] = XR[SizeRow * 4 - k];    // a sample's real part
+                }
+                else {
+                    XR[k] = - XR[SizeRow*4-k+2];    // a sample's imaginary part --- CONJUGATE!
+                }
+            }
 
-            fft.realInverse(XR, true);
+            fft.complexInverse(XR, true);
 
             for (int n = 0; n < framesize; n++) {   // Hann window
-                a_chunk_of_sound[n] = XR[n]*(0.5 - 0.5 * Math.cos(2 * Math.PI * n / (framesize - 1)));
-            }   // only use first half and real numbers of XR, because the rest are all 0 (zero-padded before)
+                a_chunk_of_sound[n] = XR[2*n];//*( 0.5 - 0.5*Math.cos(2*Math.PI*n/(framesize-1)));
+            }
 
             for (int m = i; m < i + framesize; m++){
                 if (m < hopsize*SizeColumn)
                     xr[m] += a_chunk_of_sound[m-i];
             }
         }
+        int shit = 0;
     }
+
 
     private void ResNoise(){
         double[][] NR_raw = new double [RowN*2][ColumnN];
         for (int i = 0; i < RowN; i++){
             for (int j = 0; j < ColumnN; j++){
-                NR_raw[i*2][j] = SNew_raw[i*2][j] - avgSN[j] * SNew_raw[i*2][j]/SNew[i][j];
-                NR_raw[i*2+1][j] = SNew_raw[i*2+1][j] - avgSN[j] * SNew_raw[i*2+1][j]/SNew[i][j];
+                NR_raw[i*2][j] = SNew_p[i*2][j] - avgSN[j] * SNew_p[i*2][j]/SNew[i][j];
+                NR_raw[i*2+1][j] = SNew_p[i*2+1][j] - avgSN[j] * SNew_p[i*2+1][j]/SNew[i][j];
             }
         }
         double [][] NR = new double [RowN][ColumnN];
@@ -454,8 +456,8 @@ private double [] testFFT(double[] sound){
                 }
                 TT[j] = 20*Math.log10(sum/SizeRow);
                 if(TT[j] < -35){
-                    SNew_raw[2*i][j] = 0.0316 * SSignal_raw[2*i][j];
-                    SNew_raw[2*i+1][j] = 0.0316 * SSignal_raw[2*i+1][j];
+                    SNew_p[2*i][j] = 0.0316 * SSignal_raw[2*i][j];
+                    SNew_p[2*i+1][j] = 0.0316 * SSignal_raw[2*i+1][j];
                 }
             }
         }
@@ -491,11 +493,11 @@ private double [] testFFT(double[] sound){
         int framesize = 512;
         int noverlap = 256;
         double[] w = new double[framesize]; //Hann Window
-        double[] framebuffer = new double [2*framesize]; //need zero-padding, so 2x original size
+        double[] framebuffer = new double [2*framesize];
         int ncol = (int) Math.floor((sound.length-noverlap)/(framesize-noverlap)); // how many columns of Spectrogram
         int col_index = 0;
-        double[][] S = new double[2*framesize][ncol];     //Actual 2D Array holding Spectrogram
-        DoubleFFT_1D fft = new DoubleFFT_1D(2*framesize);
+        double[][] S = new double[framesize][ncol];     //Actual 2D Array holding Spectrogram
+        DoubleFFT_1D fft = new DoubleFFT_1D(framesize);
 
         for (int n = 0; n < framesize; n++) {    // Hann window, which are all real numbers
             w[n] = 0.5 - 0.5*Math.cos(2*Math.PI*n/(framesize-1));
@@ -503,23 +505,19 @@ private double [] testFFT(double[] sound){
 
         for (int i = 0; i < noverlap*ncol; i+=noverlap) {
 
-            for (int n = framesize; n < 2*framesize; n++) {
-                framebuffer[n] = 0;     //initialize framebuffer and zero-padding
-            }
-
             for (int j = 0; j < framesize; j++) {
                 if (i+(framesize) <= noverlap*ncol) {
                     framebuffer[j] = sound[i + j];
-                    //framebuffer[j] *= w[j];              // Apply Window
+                    framebuffer[j] *= w[j];              // Apply Window
                 }
                 else
                     break;
             }
 
             if (i+(framesize) <= noverlap*ncol) {
-                fft.realForward(framebuffer, 0);            // FFT and save to the original array (this is a feature of JTransform Library)
+                fft.realForwardFull(framebuffer);            // FFT and save to the original array (this is a feature of JTransform Library)
                 // //   framebuffer = DFT_firsthalf(framebuffer);
-                for (int k = 0; k < 2 * framesize; k++) {       // Retain only half of temp array because FFT has redundant symmetrical conjugate.
+                for (int k = 0; k < framesize; k++) {       // Retain only half of temp array because FFT has redundant symmetrical conjugate.
                     S[k][col_index] = framebuffer[k];       // Save as Output Spectrogram
                 }
             }
@@ -754,7 +752,7 @@ private double [] testFFT(double[] sound){
         byte [] mBuffer = new byte[2];
 
         for (int i = 0; i<xr.length; i++) {
-            temp = (short)(xr[i]*32768.0);
+            temp = (short)(xr[i]*32768);
             mBuffer[1]=(byte)(temp>>8);
             mBuffer[0]=(byte)temp;
 
