@@ -197,6 +197,14 @@ public class MainActivity extends ActionBarActivity {
     private void onPlay(boolean start) {
         if (start) {
             //startPlaying();
+            boolean NoiseRed = NoiseReduction.isChecked();
+            if(NoiseRed==true){
+                mFileName = Environment.getExternalStorageDirectory().getAbsolutePath()+"/Music/201552_723_SUPP.pcm";
+            }
+            else {
+                mFileName = Environment.getExternalStorageDirectory().getAbsolutePath() + "/Music/201552_723.pcm";
+            }
+
             isCont = true;
             startPlaying isPlay = new startPlaying();
             timer.setBase(SystemClock.elapsedRealtime());
@@ -302,8 +310,8 @@ private double [] testFFT(double[] sound){
             noise[i] = sound[i];
         }
         // create spectrogram of the whole signal and the noise
-        //SSignal_raw = spectrogram(sound); // S in matlab
-        double[] raw = testFFT(sound);
+        SSignal_raw = spectrogram(sound); // S in matlab
+        //double[] raw = testFFT(sound);
         SizeRow = SSignal_raw.length/2;
         SizeColumn = SSignal_raw[0].length; //size(S, 2)
         SNoise_raw = spectrogram(noise); // S_N in matlab
@@ -379,7 +387,7 @@ private double [] testFFT(double[] sound){
    /*           for (int k = SizeRow*2; k < SizeRow*4-1; k++){      //Add conjugate half after original XR
                     if(k % 2 == 0){
                         XR[k] = XR[SizeRow*4-1-k];      // a sample's real part
-=======
+
                 for (int k = framesize/2 - 2; k >= 0 ; k--){
                     if((framesize/2 - 1 - k) % 2 == 0){
                         XR_second[k] = XR[framesize/2 - 1 - k];
@@ -536,11 +544,18 @@ private double [] testFFT(double[] sound){
 
     public static double[] readStreamAsDoubleArray(InputStream in, long size)
             throws IOException {
+        short temp;
+        short high;
+        short low;
         int bufferSize = (int) (size / 2);
         double[] result = new double[bufferSize];
         DataInputStream is = new DataInputStream(in);
+
         for (int i = 0; i < bufferSize; i++) {
-            result[i] = (double)is.readShort() / 32768.0;
+            temp = is.readShort();
+            low = (short)((temp >> 8) & 0x00FF);
+            high = (short)(temp << 8);
+            result[i]=((double)(high|low))/32768.0;
         }
         return result;
     }
@@ -739,9 +754,9 @@ private double [] testFFT(double[] sound){
         byte [] mBuffer = new byte[2];
 
         for (int i = 0; i<xr.length; i++) {
-            temp = (short)(xr[i]*32768);
-            mBuffer[0]=(byte)(temp>>8);
-            mBuffer[1]=(byte)temp;
+            temp = (short)(xr[i]*32768.0);
+            mBuffer[1]=(byte)(temp>>8);
+            mBuffer[0]=(byte)temp;
 
             try {
                 os.write(mBuffer, 0, mBuffer.length);
