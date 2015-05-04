@@ -58,6 +58,8 @@ public class MainActivity extends ActionBarActivity {
     //private static final String LOG_TAG = "AudioRecordTest";
 
     private String mFileName = null;
+    private String tFileName = null;
+    private String rFileName = null;
 
     private AudioRecord mRec = null;
     private AudioTrack mPlay = null;
@@ -135,6 +137,10 @@ public class MainActivity extends ActionBarActivity {
 
         ProcessBar = (ProgressBar) findViewById(R.id.progressBar);
         ProcessBar.setVisibility(View.INVISIBLE);
+
+        //mFileName = Environment.getExternalStorageDirectory().getAbsolutePath()+"/Music/201552_723.pcm";
+        //tFileName = mFileName;
+
         //FileList
         lv = (ListView) findViewById(R.id.listView);
         myList = new ArrayList<String>();
@@ -196,8 +202,27 @@ public class MainActivity extends ActionBarActivity {
     }
 
     private void onPlay(boolean start) {
+
         if (start) {
             //startPlaying();
+            boolean NoiseRed = NoiseReduction.isChecked();
+
+            if(NoiseRed==true && rFileName != null){
+                mFileName = rFileName;
+            }
+
+            else if(NoiseRed==false && tFileName != null){
+                mFileName = tFileName;
+            }
+
+            else {
+                PlayButton.setText("Play");
+                startPlay = true;
+                RecButton.setEnabled(true);
+                ProcessButton.setEnabled(true);
+                return;
+            }
+
             isCont = true;
             startPlaying isPlay = new startPlaying();
             timer.setBase(SystemClock.elapsedRealtime());
@@ -212,28 +237,20 @@ public class MainActivity extends ActionBarActivity {
 
     private void onProcess() {
 
-            /*get switch and checkbox options
-
-            if (switch is true){
-                NoiseRed(check box shit);
-            }
-            */
-        boolean NoiseRed = NoiseReduction.isChecked();
         ResidualNoise = ResNoise.isChecked();
         AdditionalAttenuation = AdditionalAtt.isChecked();
 
-        if (NoiseRed) {
-            //          mFileName = Environment.getExternalStorageDirectory().getAbsolutePath()+"/Music/201552_723.pcm";
-            startProcess isProcess = new startProcess();
-            isProcess.execute();
-
-
-            //startProcess();
-        } else {
+        if(mFileName == null){
             RecButton.setEnabled(true);
             PlayButton.setEnabled(true);
             ProcessButton.setEnabled(true);
+            return;
         }
+
+        mFileName = tFileName;
+
+        startProcess isProcess = new startProcess();
+        isProcess.execute();
     }
 
     private class startProcess extends AsyncTask<Void, Integer, Void> {
@@ -262,6 +279,8 @@ public class MainActivity extends ActionBarActivity {
             // Store Suppressed Audio File
             //xr = readPCM();
             changeFilename();
+            rFileName = mFileName;
+
             try {
                 WritetoFile();
             } catch (IOException e) {
@@ -682,6 +701,8 @@ public class MainActivity extends ActionBarActivity {
 
         mRec.release();
         mRec = null;
+        tFileName = mFileName;
+        rFileName = null;
     }
 
     OnClickListener RecClick = new OnClickListener() {
@@ -711,8 +732,6 @@ public class MainActivity extends ActionBarActivity {
         @Override
         public void onClick(View v) {
 
-            onPlay(startPlay);
-
             if (startPlay) {
                 PlayButton.setText("Stop");
                 RecButton.setEnabled(false);
@@ -722,6 +741,8 @@ public class MainActivity extends ActionBarActivity {
                 RecButton.setEnabled(true);
                 ProcessButton.setEnabled(true);
             }
+
+            onPlay(startPlay);
 
             startPlay = !startPlay;
         }
